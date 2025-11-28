@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiabMonitor | Interaktywny System Glikemii</title>
+    <link rel="stylesheet" href="styles.css">
+    </head>
+<body>
+
+    <header>
+        <h1>🩸 DiabMonitor</h1>
+        <p>Interaktywny System Monitorowania Glikemii</p>
+    </header>
+
+    <main class="container">
+
+        <section id="data-input" class="card">
+            <h2>➕ Wprowadź Nowy Pomiar</h2>
+            <form id="glucoseForm">
+                <div class="form-group">
+                    <label for="result">Wynik Glikemii (mg/dL):</label>
+                    <input type="number" id="result" required min="10" max="600">
+                </div>
+
+                <div class="form-group">
+                    <label for="time">Data i Czas:</label>
+                    <input type="datetime-local" id="time" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Kategoria Pomiaru:</label>
+                    <select id="category" required>
+                        <option value="">Wybierz...</option>
+                        <option value="Fasting">Na czczo</option>
+                        <option value="PreMeal">Przed posiłkiem</option>
+                        <option value="PostMeal1h">Po posiłku (1h)</option>
+                        <option value="PostMeal2h">Po posiłku (2h)</option>
+                        <option value="BeforeBed">Przed snem</option>
+                        <option value="Other">Inne</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="insulin">Dawka Insuliny (j.):</label>
+                    <input type="number" id="insulin" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="carbs">Węglowodany (WW):</label>
+                    <input type="number" id="carbs" min="0" step="0.5">
+                </div>
+
+                <button type="submit">Zapisz Pomiar</button>
+            </form>
+        </section>
+
+        <section id="dashboard" class="card">
+            <h2>📈 Dashboard i Analiza</h2>
+            
+            <div id="summary-metrics">
+                <h3>Kluczowe Wskaźniki</h3>
+                <p>Średnia Glikemia (7 dni): <span id="avg-glucose">--</span></p>
+                <p>Czas w Zakresie (TIR): <span id="time-in-range">--</span></p>
+            </div>
+
+            <hr>
+
+            <div class="filter-controls">
+                <button data-period="24h">24h</button>
+                <button data-period="7d">7 Dni</button>
+                <button data-period="30d">30 Dni</button>
+            </div>
+
+            <div class="chart-container">
+                <h3>Wykres Dzienny/Tygodniowy</h3>
+                <canvas id="glucoseChart"></canvas>
+                
+            </div>
+
+        </section>
+
+        <section id="log-table" class="card">
+            <h2>📜 Pełny Dziennik Pomiarów</h2>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Data i Czas</th>
+                        <th>Wynik</th>
+                        <th>Kategoria</th>
+                        <th>Insulina</th>
+                        <th>WW</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 System Monitorowania Glikemii</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
