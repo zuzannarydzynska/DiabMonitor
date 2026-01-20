@@ -1,8 +1,6 @@
-// ==========================================
-// 1. ZMIENNE I KONFIGURACJA
-// ==========================================
+// --- ZMIENNE ---
 let glucoseData = []; 
-let userProfile = null; // Tutaj będziemy trzymać dane pacjenta
+let userProfile = null;
 
 const glucoseForm = document.getElementById('glucoseForm');
 const loginForm = document.getElementById('loginForm');
@@ -15,11 +13,7 @@ let currentFilter = '24h';
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 
-// ==========================================
-// 2. OBSŁUGA LOGOWANIA I SESJI
-// ==========================================
-
-// Sprawdzamy na starcie, czy użytkownik już istnieje w pamięci
+// --- LOGIKA SESJI ---
 function checkSession() {
     const storedUser = localStorage.getItem('userProfile');
     if (storedUser) {
@@ -39,53 +33,41 @@ function showAppScreen() {
     loginScreen.classList.add('hidden');
     appScreen.classList.remove('hidden');
     
-    // Aktualizujemy nagłówek strony o imię i typ cukrzycy
     if (userProfile) {
-        headerSubtitle.textContent = `Pacjent: ${userProfile.name} | ${userProfile.diabetesType}`;
+        headerSubtitle.textContent = `${userProfile.name} | ${userProfile.diabetesType}`;
     }
     
-    // Po zalogowaniu ładujemy dane i odświeżamy widok
     loadDataFromLocalStorage();
     setTimeDefaults();
     refreshViews();
 }
 
-// Logika przycisku "Zaloguj się"
+// Obsługa Logowania
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value;
         const diabetesType = document.getElementById('diabetesType').value;
-        // Hasło jest tutaj tylko "pro forma" (symulacja), w prawdziwej apce wysyłalibyśmy je na serwer.
 
         if (username && diabetesType) {
-            userProfile = {
-                name: username,
-                diabetesType: diabetesType
-            };
-            
-            // Zapisz profil w przeglądarce na stałe
+            userProfile = { name: username, diabetesType: diabetesType };
             localStorage.setItem('userProfile', JSON.stringify(userProfile));
-            
             showAppScreen();
         }
     });
 }
 
-// Logika przycisku "Wyloguj się"
+// Obsługa Wylogowania
 document.getElementById('logout-btn').addEventListener('click', function() {
-    if(confirm("Czy na pewno chcesz się wylogować?")) {
-        localStorage.removeItem('userProfile'); // Usuń sesję użytkownika
+    if(confirm("Wylogować?")) {
+        localStorage.removeItem('userProfile');
         userProfile = null;
-        location.reload(); // Odśwież stronę, by wrócić do logowania
+        location.reload();
     }
 });
 
-// ==========================================
-// 3. OBSŁUGA BAZY DANYCH (POMIARY)
-// ==========================================
-
+// --- OBSŁUGA DANYCH ---
 function saveDataToLocalStorage() {
     localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
 }
@@ -97,10 +79,7 @@ function loadDataFromLocalStorage() {
     }
 }
 
-// ==========================================
-// 4. OBSŁUGA DODAWANIA WYNIKU
-// ==========================================
-
+// --- DODAWANIE WYNIKU ---
 if (glucoseForm) {
     glucoseForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -108,20 +87,10 @@ if (glucoseForm) {
         const result = parseInt(document.getElementById('result').value);
         const time = document.getElementById('time').value;
         const category = document.getElementById('category').value;
-        
-        const insulinVal = document.getElementById('insulin').value;
-        const carbsVal = document.getElementById('carbs').value;
-        const insulin = insulinVal !== "" ? insulinVal : "-";
-        const carbs = carbsVal !== "" ? carbsVal : "-";
+        const insulin = document.getElementById('insulin').value || "-";
+        const carbs = document.getElementById('carbs').value || "-";
 
-        const newRecord = { 
-            id: Date.now(), 
-            result: result, 
-            time: time, 
-            category: category, 
-            insulin: insulin, 
-            carbs: carbs 
-        };
+        const newRecord = { result, time, category, insulin, carbs };
 
         glucoseData.push(newRecord);
         saveDataToLocalStorage(); 
@@ -141,74 +110,64 @@ function setTimeDefaults() {
     }
 }
 
-// ==========================================
-// 5. FILTROWANIE I WIDOKI
-// ==========================================
-
+// --- FILTRY I TABELA ---
 function getFilteredData() {
     glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
-
     if (currentFilter === 'all') return glucoseData;
 
     const now = new Date();
-    let hoursToSubtract = 24;
+    let hours = 24;
+    if (currentFilter === '7d') hours = 168; 
+    if (currentFilter === '30d') hours = 720; 
 
-    if (currentFilter === '7d') hoursToSubtract = 168; 
-    if (currentFilter === '30d') hoursToSubtract = 720; 
-
-    const cutoffTime = now.getTime() - (hoursToSubtract * 60 * 60 * 1000);
-    return glucoseData.filter(record => new Date(record.time).getTime() > cutoffTime);
+    const cutoff = now.getTime() - (hours * 60 * 60 * 1000);
+    return glucoseData.filter(r => new Date(r.time).getTime() > cutoff);
 }
 
-window.setFilter = function(filterType, btnElement) {
+window.setFilter = function(filterType, btn) {
     currentFilter = filterType;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    if(btnElement) btnElement.classList.add('active');
+    if(btn) btn.classList.add('active');
     refreshViews();
 }
 
 function refreshViews() {
-    const dataToShow = getFilteredData();
-    updateTable(dataToShow);
-    updateMetrics(dataToShow);
+    const data = getFilteredData();
+    updateTable(data);
+    updateMetrics(data);
 }
 
 function updateTable(data) {
     if (!dataTableBody) return;
     dataTableBody.innerHTML = ''; 
-    const sortedForDisplay = [...data].reverse(); 
+    const sorted = [...data].reverse(); 
 
-    if (sortedForDisplay.length === 0) {
-        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak pomiarów.</td></tr>';
+    if (sorted.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak danych.</td></tr>';
         return;
     }
 
-    sortedForDisplay.forEach(record => {
+    sorted.forEach(rec => {
         const row = dataTableBody.insertRow();
-        
-        let colorClass = 'normal';
-        if (record.result < TARGET_RANGE_MIN) colorClass = 'hypo'; 
-        else if (record.result > TARGET_RANGE_MAX) colorClass = 'hyper'; 
+        let color = 'normal';
+        if (rec.result < TARGET_RANGE_MIN) color = 'hypo'; 
+        else if (rec.result > TARGET_RANGE_MAX) color = 'hyper'; 
 
-        const d = new Date(record.time);
+        const d = new Date(rec.time);
         
-        const cellDate = row.insertCell();
-        cellDate.innerHTML = `
-            <div style="font-weight:600; color:#333;">${d.toLocaleDateString('pl-PL')}</div>
-            <div style="font-size:0.85em; color:#888;">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
+        row.insertCell().innerHTML = `
+            <div style="font-weight:bold">${d.toLocaleDateString('pl-PL')}</div>
+            <div style="font-size:0.85em; color:#888">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
         `;
+        
+        const resCell = row.insertCell();
+        resCell.textContent = rec.result;
+        resCell.className = color;
+        resCell.style.fontSize = '1.3em';
 
-        const cellResult = row.insertCell();
-        cellResult.textContent = record.result;
-        cellResult.className = colorClass; 
-        cellResult.style.fontSize = '1.3em'; 
-
-        const cellDetails = row.insertCell();
-        cellDetails.innerHTML = `
-            <div style="font-size:0.9em; margin-bottom:2px;">${record.category}</div>
-            <div style="font-size:0.8em; color:#666;">
-                Ins: <b>${record.insulin}</b> | WW: <b>${record.carbs}</b>
-            </div>
+        row.insertCell().innerHTML = `
+            <div style="font-size:0.9em">${rec.category}</div>
+            <div style="font-size:0.8em; color:#666">Ins: ${rec.insulin} | WW: ${rec.carbs}</div>
         `;
     });
 }
@@ -219,29 +178,21 @@ function updateMetrics(data) {
     const countEl = document.getElementById('count-glucose');
 
     if (!avgEl) return;
-
     if (data.length === 0) {
-        avgEl.textContent = '--';
-        tirEl.textContent = '--';
-        countEl.textContent = '0';
+        avgEl.textContent = '--'; tirEl.textContent = '--'; countEl.textContent = '0';
         return;
     }
+    const total = data.reduce((s, r) => s + parseInt(r.result), 0);
+    const avg = (total / data.length).toFixed(0);
+    const inRange = data.filter(r => r.result >= 70 && r.result <= 180).length;
+    const tir = ((inRange / data.length) * 100).toFixed(0);
 
-    const total = data.reduce((sum, r) => sum + parseInt(r.result), 0);
-    const average = (total / data.length).toFixed(0);
-    
-    const inRangeCount = data.filter(r => r.result >= TARGET_RANGE_MIN && r.result <= TARGET_RANGE_MAX).length;
-    const tirPercentage = ((inRangeCount / data.length) * 100).toFixed(0);
-
-    avgEl.textContent = `${average} mg/dL`;
-    tirEl.textContent = `${tirPercentage}%`;
+    avgEl.textContent = `${avg} mg/dL`;
+    tirEl.textContent = `${tir}%`;
     countEl.textContent = data.length;
 }
 
-// ==========================================
-// 6. START APLIKACJI
-// ==========================================
+// --- START ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Najpierw sprawdzamy, czy ktoś jest zalogowany
     checkSession();
 });
