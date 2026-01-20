@@ -3,182 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiabMonitor | Historia Pomiarów</title>
-    
-    <style>
-        /* Podstawowe style */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; }
-        
-        header { text-align: center; margin-bottom: 30px; background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; }
-        
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        
-        h2 { border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-top: 0; color: #2c3e50; }
-        h3 { margin-top: 0; }
-
-        /* Style Tabeli (Teraz główny element) */
-        .table-responsive {
-            overflow-x: auto;
-        }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        
-        th, td { 
-            padding: 15px; 
-            text-align: left; 
-            border-bottom: 1px solid #eee; 
-        }
-        
-        th { 
-            background-color: #3498db; 
-            color: white; 
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9em;
-        }
-        
-        tr:hover { background-color: #f1f8ff; }
-        
-        /* Kolory dla wyników (przykładowa wizualizacja) */
-        .high-glucose { color: #e74c3c; font-weight: bold; }
-        .normal-glucose { color: #27ae60; font-weight: bold; }
-        .low-glucose { color: #f39c12; font-weight: bold; }
-
-        /* Dashboard (Statystyki) */
-        #summary-metrics { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 20px; 
-            text-align: center; 
-        }
-        
-        .metric-box {
-            background: #ecf0f1;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        
-        .metric-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #2980b9;
-        }
-
-        .filter-controls { text-align: center; margin-top: 20px; }
-        .filter-controls button {
-            padding: 8px 16px;
-            background: #95a5a6;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            margin: 0 5px;
-        }
-        .filter-controls button:hover { background: #7f8c8d; }
-
-    </style>
+    <title>DiabMonitor | System Glikemii</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <header>
         <h1>🩸 DiabMonitor</h1>
-        <p>Przegląd i Historia Pomiarów</p>
     </header>
 
     <main class="container">
+        
+        <div class="top-section">
+            
+            <section class="card">
+                <h2>➕ Dodaj Pomiar</h2>
+                <form id="glucoseForm">
+                    <div class="form-group">
+                        <label for="result">Wynik (mg/dL)</label>
+                        <input type="number" id="result" required min="10" max="600">
+                    </div>
+                    <div class="form-group">
+                        <label for="time">Data</label>
+                        <input type="datetime-local" id="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Kategoria</label>
+                        <select id="category">
+                            <option value="Na czczo">Na czczo</option>
+                            <option value="Przed posiłkiem">Przed posiłkiem</option>
+                            <option value="Po posiłku">Po posiłku</option>
+                            <option value="Inne">Inne</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1">
+                            <label for="insulin">Insulina (j)</label>
+                            <input type="number" id="insulin" placeholder="0">
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label for="carbs">WW</label>
+                            <input type="number" id="carbs" step="0.5" placeholder="0">
+                        </div>
+                    </div>
+                    <button type="submit">Zapisz</button>
+                </form>
+            </section>
 
-        <section id="log-table" class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>📜 Dziennik Pomiarów</h2>
-                <button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">+ Dodaj</button>
-            </div>
+            <section class="card">
+                <h2>📈 Analiza</h2>
+                
+                <div id="summary-metrics">
+                    <div>Średnia: <span id="avg-glucose" class="metric-val">--</span></div>
+                    <div>TIR: <span id="time-in-range" class="metric-val">--</span></div>
+                </div>
 
-            <div class="table-responsive">
+                <div class="filter-controls">
+                    <button class="filter-btn active" onclick="setFilter('24h', this)">24h</button>
+                    <button class="filter-btn" onclick="setFilter('7d', this)">7 Dni</button>
+                    <button class="filter-btn" onclick="setFilter('30d', this)">30 Dni</button>
+                    <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie</button>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="glucoseChart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <section class="card">
+            <h2>📜 Historia</h2>
+            <div class="table-wrapper">
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th>Data i Czas</th>
-                            <th>Wynik (mg/dL)</th>
-                            <th>Kategoria</th>
-                            <th>Insulina (j.)</th>
+                            <th>Data</th>
+                            <th>Wynik</th>
+                            <th>Kat.</th>
+                            <th>Ins.</th>
                             <th>WW</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>2023-10-27 08:00</td>
-                            <td class="normal-glucose">110</td>
-                            <td>Na czczo</td>
-                            <td>4</td>
-                            <td>3.5</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-27 10:30</td>
-                            <td class="high-glucose">185</td>
-                            <td>Po posiłku (1h)</td>
-                            <td>2</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-27 13:00</td>
-                            <td class="normal-glucose">98</td>
-                            <td>Przed posiłkiem</td>
-                            <td>5</td>
-                            <td>6.0</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-27 19:00</td>
-                            <td class="low-glucose">65</td>
-                            <td>Przed kolacją</td>
-                            <td>-</td>
-                            <td>1.0</td>
-                        </tr>
-                        <tr>
-                            <td>2023-10-27 22:00</td>
-                            <td class="normal-glucose">120</td>
-                            <td>Przed snem</td>
-                            <td>8</td>
-                            <td>-</td>
-                        </tr>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
-        </section>
-
-        <section id="dashboard" class="card">
-            <h2>📈 Analiza</h2>
-            
-            <div id="summary-metrics">
-                <div class="metric-box">
-                    <div>Średnia Glikemia (7 dni)</div>
-                    <div class="metric-value" id="avg-glucose">115 mg/dL</div>
-                </div>
-                <div class="metric-box">
-                    <div>Czas w Zakresie (TIR)</div>
-                    <div class="metric-value" id="time-in-range">85%</div>
-                </div>
-                <div class="metric-box">
-                    <div>Liczba Pomiarów</div>
-                    <div class="metric-value">5</div>
-                </div>
-            </div>
-
-            <div class="filter-controls">
-                <span>Filtruj okres: </span>
-                <button data-period="24h">24h</button>
-                <button data-period="7d">7 Dni</button>
-                <button data-period="30d">30 Dni</button>
             </div>
         </section>
 
     </main>
 
-    <footer>
-        <p>&copy; 2025 System Monitorowania Glikemii</p>
-    </footer>
-
     <script src="script.js"></script>
-
 </body>
 </html>
