@@ -1,17 +1,11 @@
 let glucoseData = []; 
 const glucoseForm = document.getElementById('glucoseForm');
 const dataTableBody = document.querySelector('#dataTable tbody');
-
-// Zmienna przechowująca aktualny filtr (domyślnie 24h)
 let currentFilter = '24h'; 
-
-// Granice normy
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 
-// =======================================================================
-// 1. OBSŁUGA DANYCH
-// =======================================================================
+// --- 1. DANE ---
 function saveDataToLocalStorage() {
     localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
 }
@@ -23,20 +17,16 @@ function loadDataFromLocalStorage() {
     }
 }
 
-// =======================================================================
-// 2. OBSŁUGA FORMULARZA
-// =======================================================================
+// --- 2. FORMULARZ ---
 glucoseForm.addEventListener('submit', function(e) {
     e.preventDefault(); 
-
     const result = parseInt(document.getElementById('result').value);
     const time = document.getElementById('time').value;
     const category = document.getElementById('category').value;
-    const insulin = document.getElementById('insulin').value ? parseInt(document.getElementById('insulin').value) : 0;
-    const carbs = document.getElementById('carbs').value ? parseFloat(document.getElementById('carbs').value) : 0;
+    const insulin = document.getElementById('insulin').value ? document.getElementById('insulin').value : '-';
+    const carbs = document.getElementById('carbs').value ? document.getElementById('carbs').value : '-';
 
     const newRecord = { result, time, category, insulin, carbs };
-
     glucoseData.push(newRecord);
     saveDataToLocalStorage(); 
     refreshViews(); 
@@ -47,120 +37,96 @@ glucoseForm.addEventListener('submit', function(e) {
 
 function setTimeDefaults() {
     const now = new Date();
-    // Korekta strefy czasowej dla input datetime-local
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('time').value = now.toISOString().slice(0, 16);
 }
 
-// =======================================================================
-// 3. LOGIKA FILTROWANIA
-// =======================================================================
+// --- 3. FILTRY ---
 function getFilteredData() {
-    // Sortowanie zawsze chronologiczne przed filtrowaniem
     glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
-
     if (currentFilter === 'all') return glucoseData;
 
     const now = new Date();
-    let hoursToSubtract = 24;
-
-    if (currentFilter === '7d') hoursToSubtract = 168; // 7 dni * 24h
-    if (currentFilter === '30d') hoursToSubtract = 720; // 30 dni * 24h
-
-    const cutoffTime = now.getTime() - (hoursToSubtract * 60 * 60 * 1000);
+    let hours = 24;
+    if (currentFilter === '7d') hours = 168;
+    if (currentFilter === '30d') hours = 720;
     
-    return glucoseData.filter(record => new Date(record.time).getTime() > cutoffTime);
+    const cutoff = now.getTime() - (hours * 60 * 60 * 1000);
+    return glucoseData.filter(r => new Date(r.time).getTime() > cutoff);
 }
 
-// Funkcja obsługująca kliknięcie przycisku
-window.setFilter = function(filterType, btnElement) {
+window.setFilter = function(filterType, btn) {
     currentFilter = filterType;
-    
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    if(btnElement) btnElement.classList.add('active');
-
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
     refreshViews();
 }
 
 function refreshViews() {
-    const dataToShow = getFilteredData();
-    updateTable(dataToShow);
-    updateMetrics(dataToShow);
+    const data = getFilteredData();
+    updateTable(data);
+    updateMetrics(data);
 }
 
-// =======================================================================
-// 4. GENEROWANIE TABELI
-// =======================================================================
+// --- 4. TABELA (Zoptymalizowana pod wąski widok) ---
 function updateTable(data) {
     dataTableBody.innerHTML = ''; 
-    
-    // Do tabeli chcemy najnowsze na górze, więc odwracamy kopię tablicy
-    const sortedForTable = [...data].reverse(); 
+    const sorted = [...data].reverse(); 
 
-    if (sortedForTable.length === 0) {
-        dataTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Brak danych w tym okresie</td></tr>';
+    if (sorted.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px">Brak danych</td></tr>';
         return;
     }
 
-    sortedForTable.forEach(record => {
+    sorted.forEach(rec => {
         const row = dataTableBody.insertRow();
         
-        // Kolorowanie wyniku
-        let colorClass = 'normal';
-        if (record.result < TARGET_RANGE_MIN) colorClass = 'hypo'; 
-        else if (record.result > TARGET_RANGE_MAX) colorClass = 'hyper'; 
+        let color = 'normal';
+        if (rec.result < TARGET_RANGE_MIN) color = 'hypo'; 
+        else if (rec.result > TARGET_RANGE_MAX) color = 'hyper'; 
 
-        // Formatowanie daty
-        const date = new Date(record.time);
-        const dateStr = date.toLocaleString('pl-PL', { month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'});
+        const d = new Date(rec.time);
+        
+        // Kolumna 1: Data i Godzina (pod sobą)
+        row.insertCell().innerHTML = `
+            <div style="font-weight:bold">${d.toLocaleDateString('pl-PL')}</div>
+            <div style="font-size:0.85em; color:#777">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
+        `;
 
-        row.insertCell().textContent = dateStr;
+        // Kolumna 2: Wynik
+        const resCell = row.insertCell();
+        resCell.textContent = rec.result;
+        resCell.className = color;
+        resCell.style.fontSize = '1.2em';
 
-        const resultCell = row.insertCell();
-        resultCell.textContent = record.result;
-        resultCell.classList.add(colorClass);
-
-        row.insertCell().textContent = record.category;
-        row.insertCell().textContent = record.insulin || '-';
-        row.insertCell().textContent = record.carbs || '-';
+        // Kolumna 3: Info (Kategoria + Ins/WW)
+        row.insertCell().innerHTML = `
+            <div style="font-size:0.9em">${rec.category}</div>
+            <div style="font-size:0.8em; color:#555">Ins: ${rec.insulin} | WW: ${rec.carbs}</div>
+        `;
     });
 }
 
-// =======================================================================
-// 5. OBLICZANIE STATYSTYK
-// =======================================================================
+// --- 5. STATYSTYKI ---
 function updateMetrics(data) {
-    const avgEl = document.getElementById('avg-glucose');
-    const tirEl = document.getElementById('time-in-range');
-    const countEl = document.getElementById('count-glucose');
-
     if (data.length === 0) {
-        avgEl.textContent = '--';
-        tirEl.textContent = '--';
-        countEl.textContent = '0';
+        document.getElementById('avg-glucose').textContent = '--';
+        document.getElementById('time-in-range').textContent = '--';
+        document.getElementById('count-glucose').textContent = '0';
         return;
     }
+    const total = data.reduce((s, r) => s + parseInt(r.result), 0);
+    const avg = (total / data.length).toFixed(0);
+    const inRange = data.filter(r => r.result >= 70 && r.result <= 180).length;
+    const tir = ((inRange / data.length) * 100).toFixed(0);
 
-    // Średnia
-    const total = data.reduce((sum, record) => sum + record.result, 0);
-    const average = (total / data.length).toFixed(0);
-
-    // TIR (Time In Range)
-    const inRangeCount = data.filter(record => 
-        record.result >= TARGET_RANGE_MIN && record.result <= TARGET_RANGE_MAX
-    ).length;
-    const tirPercentage = ((inRangeCount / data.length) * 100).toFixed(0);
-
-    avgEl.textContent = `${average} mg/dL`;
-    tirEl.textContent = `${tirPercentage}%`;
-    countEl.textContent = data.length;
+    document.getElementById('avg-glucose').textContent = `${avg} mg/dL`;
+    document.getElementById('time-in-range').textContent = `${tir}%`;
+    document.getElementById('count-glucose').textContent = data.length;
 }
 
-// =======================================================================
-// 6. START
-// =======================================================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     loadDataFromLocalStorage();
     setTimeDefaults();
-    refreshViews(); 
+    refreshViews();
 });
