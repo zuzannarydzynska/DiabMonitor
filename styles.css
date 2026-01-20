@@ -1,18 +1,20 @@
-/* --- Ogólne --- */
+/* --- Reset ustawień --- */
+* { box-sizing: border-box; }
+
 body { 
     font-family: 'Segoe UI', sans-serif; 
     background-color: #f4f7f6; 
     color: #333; 
     margin: 0; 
-    padding: 15px; /* Mniejszy padding na start */
+    padding: 15px; 
 }
 
-/* UKŁAD ŚCIŚLE JEDNOKOLUMNOWY */
+/* --- Główny kontener (PIONOWY) --- */
 .container { 
-    max-width: 600px; /* Wąski kontener, jak w telefonie */
+    max-width: 500px; /* Wąski widok jak w aplikacji mobilnej */
     margin: 0 auto;   
     display: flex;
-    flex-direction: column; 
+    flex-direction: column; /* Wszystko jeden pod drugim */
     gap: 20px; 
 }
 
@@ -21,11 +23,12 @@ header {
     margin-bottom: 10px; 
 }
 
+/* --- Karty --- */
 .card { 
     background: white; 
     padding: 20px; 
     border-radius: 12px; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
 }
 
 h2 { 
@@ -34,22 +37,24 @@ h2 {
     padding-bottom: 10px; 
     color: #2c3e50; 
     text-align: center;
+    font-size: 1.2rem;
 }
 
-/* --- Formularz (Wszystko pod sobą) --- */
+/* --- Formularz --- */
 .form-group { 
     margin-bottom: 15px; 
-    width: 100%; /* Wymuszenie pełnej szerokości */
+    width: 100%; 
 }
 
-label { display: block; font-weight: 600; margin-bottom: 5px; }
+label { display: block; font-weight: 600; margin-bottom: 5px; color: #555; }
+
 input, select { 
     width: 100%; 
-    padding: 12px; /* Większe pola dla wygody */
+    padding: 12px; 
     border: 1px solid #ddd; 
-    border-radius: 6px; 
-    box-sizing: border-box; 
-    font-size: 1rem;
+    border-radius: 8px; 
+    font-size: 16px; 
+    background-color: #fafafa;
 }
 
 .save-btn { 
@@ -58,62 +63,79 @@ input, select {
     color: white; 
     border: none; 
     padding: 15px; 
-    border-radius: 6px; 
+    border-radius: 8px; 
     cursor: pointer; 
     font-weight: bold; 
     font-size: 1.1rem;
     margin-top: 10px;
+    transition: background 0.2s;
 }
 .save-btn:hover { background: #2980b9; }
 
-/* --- Statystyki (PIONOWE) --- */
+/* --- Statystyki (Pionowe) --- */
 #summary-metrics { 
     display: flex; 
-    flex-direction: column; /* Kluczowa zmiana: elementy jeden pod drugim */
-    gap: 15px; 
-    margin-bottom: 25px; 
+    flex-direction: column; 
+    gap: 0; 
+    margin-bottom: 20px; 
     background: #f8f9fa; 
-    padding: 15px; 
     border-radius: 8px; 
+    border: 1px solid #eee;
 }
 
 .metric-box { 
     display: flex; 
-    justify-content: space-between; /* Etykieta po lewej, wynik po prawej */
+    justify-content: space-between; 
     align-items: center;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 10px;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
 }
 .metric-box:last-child { border-bottom: none; }
 
-.metric-label { font-size: 0.9rem; color: #7f8c8d; }
+.metric-label { color: #7f8c8d; font-size: 0.95rem; }
 .metric-val { font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
 
-/* --- Filtry (Pionowa lista przycisków) --- */
+/* --- Filtry (Pionowe) --- */
 .filter-controls { 
     display: flex; 
-    flex-direction: column; /* Przyciski jeden pod drugim */
-    gap: 10px; 
-    margin-bottom: 20px; 
+    flex-direction: column; 
+    gap: 8px; 
+    margin-bottom: 25px; 
 }
+
 .filter-btn { 
-    width: 100%; /* Przycisk na całą szerokość */
+    width: 100%; 
     background: #e0e0e0; 
     border: none; 
     padding: 12px; 
     border-radius: 8px; 
     cursor: pointer; 
     font-size: 1rem;
+    font-weight: 500;
 }
 .filter-btn.active { background: #3498db; color: white; }
 
 /* --- Tabela --- */
+.log-title { margin-bottom: 10px; color: #555; font-size: 1.1rem; }
 .table-wrapper { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { background: #ecf0f1; padding: 10px; text-align: left; }
-td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
 
-/* Małe detale dla koloru */
-.hypo { color: red; font-weight: bold; }
-.normal { color: green; font-weight: bold; }
-.hyper { color: orange; font-weight: bold; }
+th { 
+    background: #ecf0f1; 
+    padding: 10px; 
+    text-align: left; 
+    color: #555;
+    font-size: 0.9rem;
+}
+
+td { 
+    padding: 12px 10px; 
+    border-bottom: 1px solid #eee; 
+    font-size: 0.95rem; 
+    vertical-align: middle;
+}
+
+/* Kolory wyników */
+.hypo { color: #e74c3c; font-weight: bold; } 
+.normal { color: #27ae60; font-weight: bold; } 
+.hyper { color: #d35400; font-weight: bold; }
