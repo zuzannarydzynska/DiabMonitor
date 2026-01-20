@@ -1,26 +1,36 @@
-document.getElementById("loginForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    const login = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+function register() {
+    const user = regUser.value;
+    const pass = regPass.value;
 
     // WALIDACJA HASŁA
-    const hasloRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    const regex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
 
-    if (!hasloRegex.test(password)) {
-        document.getElementById("error").innerText =
-            "Hasło musi mieć min. 8 znaków, 1 cyfrę i 1 wielką literę";
+    if (!regex.test(pass)) {
+        msg.innerText = "Hasło: min. 6 znaków, 1 duża litera, 1 cyfra";
         return;
     }
 
-    // FAKE logowanie (tylko demo)
-    if (login === "admin" && password === "Admin123") {
-        localStorage.setItem("user", login);
-        window.location.href = "profil.html";
+    // zapis do localStorage
+    localStorage.setItem("user", user);
+    localStorage.setItem("pass", pass);
+
+    msg.innerText = "Zarejestrowano!";
+}
+
+function login() {
+    const user = logUser.value;
+    const pass = logPass.value;
+
+    const savedUser = localStorage.getItem("user");
+    const savedPass = localStorage.getItem("pass");
+
+    if (user === savedUser && pass === savedPass) {
+        localStorage.setItem("logged", "true");
+        window.location.href = "profile.html";
     } else {
-        document.getElementById("error").innerText = "Błędne dane logowania";
+        msg.innerText = "Błędne dane";
     }
-});
+}
 
 // ==========================================
 // 1. ZMIENNE GLOBALNE I KONFIGURACJA
@@ -243,5 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeDefaults();
     refreshViews();
 });
+
 
 
