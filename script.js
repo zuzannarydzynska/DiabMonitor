@@ -1,25 +1,99 @@
 // ==========================================
-// 1. ZMIENNE GLOBALNE I KONFIGURACJA
+// 1. ZMIENNE I KONFIGURACJA
 // ==========================================
 let glucoseData = []; 
-const glucoseForm = document.getElementById('glucoseForm');
-const dataTableBody = document.querySelector('#dataTable tbody');
-let currentFilter = '24h'; // Domyślny filtr na start
+let userProfile = null; // Przechowuje dane o użytkowniku
 
-// Granice normy (do kolorowania wyników)
+const glucoseForm = document.getElementById('glucoseForm');
+const loginForm = document.getElementById('loginForm');
+const dataTableBody = document.querySelector('#dataTable tbody');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
+const headerSubtitle = document.getElementById('header-subtitle');
+
+let currentFilter = '24h';
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 
 // ==========================================
-// 2. OBSŁUGA BAZY DANYCH (LocalStorage)
+// 2. OBSŁUGA LOGOWANIA I SESJI
 // ==========================================
 
-// Zapisywanie danych do pamięci przeglądarki
+function checkSession() {
+    const storedUser = localStorage.getItem('userProfile');
+    if (storedUser) {
+        userProfile = JSON.parse(storedUser);
+        showAppScreen();
+    } else {
+        showLoginScreen();
+    }
+}
+
+function showLoginScreen() {
+    loginScreen.classList.remove('hidden');
+    appScreen.classList.add('hidden');
+}
+
+function showAppScreen() {
+    loginScreen.classList.add('hidden');
+    appScreen.classList.remove('hidden');
+    
+    // Aktualizacja nagłówka o imię i typ cukrzycy
+    if (userProfile) {
+        headerSubtitle.textContent = `Pacjent: ${userProfile.name} | ${userProfile.diabetesType}`;
+    }
+    
+    // Załaduj dane po zalogowaniu
+    loadDataFromLocalStorage();
+    setTimeDefaults();
+    refreshViews();
+}
+
+// Obsługa formularza logowania
+if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value; // W prawdziwej aplikacji hasło wysyłamy na serwer!
+        const diabetesType = document.getElementById('diabetesType').value;
+
+        // Prosta walidacja (tylko demo)
+        if (username && diabetesType) {
+            userProfile = {
+                name: username,
+                diabetesType: diabetesType,
+                loginTime: new Date().toISOString()
+            };
+            
+            // Zapisz profil w przeglądarce
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            
+            showAppScreen();
+        }
+    });
+}
+
+// Obsługa wylogowania
+document.getElementById('logout-btn').addEventListener('click', function() {
+    if(confirm("Czy na pewno chcesz się wylogować?")) {
+        localStorage.removeItem('userProfile');
+        userProfile = null;
+        glucoseData = []; // Czyścimy widok danych (zostają w pamięci pod kluczem, ale znikają z ekranu)
+        location.reload(); // Odśwież stronę
+    }
+});
+
+// ==========================================
+// 3. OBSŁUGA BAZY DANYCH (POMIARY)
+// ==========================================
+
 function saveDataToLocalStorage() {
+    // Zapisujemy dane powiązane z konkretnym użytkownikiem (opcjonalnie można rozbudować o klucz per user)
+    // Na razie prosta wersja: jedna baza pomiarów na przeglądarkę
     localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
 }
 
-// Wczytywanie danych przy starcie
 function loadDataFromLocalStorage() {
     const storedData = localStorage.getItem('glucoseRecords');
     if (storedData) {
@@ -28,34 +102,24 @@ function loadDataFromLocalStorage() {
 }
 
 // ==========================================
-// 3. OBSŁUGA FORMULARZA
+// 4. OBSŁUGA FORMULARZA GLIKEMII
 // ==========================================
 
 if (glucoseForm) {
     glucoseForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Zapobiega odświeżeniu strony
+        e.preventDefault();
         
-        // Pobranie wartości z pól
-        const resultInput = document.getElementById('result');
-        const timeInput = document.getElementById('time');
-        const categoryInput = document.getElementById('category');
-        const insulinInput = document.getElementById('insulin');
-        const carbsInput = document.getElementById('carbs');
-
-        // Walidacja (czy elementy istnieją)
-        if (!resultInput || !timeInput) return;
-
-        const result = parseInt(resultInput.value);
-        const time = timeInput.value;
-        const category = categoryInput.value;
+        const result = parseInt(document.getElementById('result').value);
+        const time = document.getElementById('time').value;
+        const category = document.getElementById('category').value;
         
-        // Obsługa pól opcjonalnych (jeśli puste, wstawiamy "-")
-        const insulin = insulinInput.value !== "" ? insulinInput.value : "-";
-        const carbs = carbsInput.value !== "" ? carbsInput.value : "-";
+        const insulinVal = document.getElementById('insulin').value;
+        const carbsVal = document.getElementById('carbs').value;
+        const insulin = insulinVal !== "" ? insulinVal : "-";
+        const carbs = carbsVal !== "" ? carbsVal : "-";
 
-        // Tworzenie nowego rekordu
         const newRecord = { 
-            id: Date.now(), // Unikalne ID
+            id: Date.now(), 
             result: result, 
             time: time, 
             category: category, 
@@ -63,32 +127,125 @@ if (glucoseForm) {
             carbs: carbs 
         };
 
-        // Dodanie do tablicy i zapisanie
         glucoseData.push(newRecord);
         saveDataToLocalStorage(); 
-        
-        // Odświeżenie widoku
         refreshViews(); 
         
-        // Reset formularza
         glucoseForm.reset();
         setTimeDefaults(); 
     });
 }
 
-// Ustawia aktualną datę i godzinę w polu formularza
 function setTimeDefaults() {
     const timeInput = document.getElementById('time');
     if (timeInput) {
         const now = new Date();
-        // Korekta strefy czasowej dla inputa datetime-local
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
 
 // ==========================================
-// 4. FILTROWANIE DANYCH
+// 5. FILTROWANIE I WIDOKI
 // ==========================================
 
-function getFilteredData()
+function getFilteredData() {
+    glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
+
+    if (currentFilter === 'all') return glucoseData;
+
+    const now = new Date();
+    let hoursToSubtract = 24;
+
+    if (currentFilter === '7d') hoursToSubtract = 168; 
+    if (currentFilter === '30d') hoursToSubtract = 720; 
+
+    const cutoffTime = now.getTime() - (hoursToSubtract * 60 * 60 * 1000);
+    return glucoseData.filter(record => new Date(record.time).getTime() > cutoffTime);
+}
+
+window.setFilter = function(filterType, btnElement) {
+    currentFilter = filterType;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btnElement) btnElement.classList.add('active');
+    refreshViews();
+}
+
+function refreshViews() {
+    const dataToShow = getFilteredData();
+    updateTable(dataToShow);
+    updateMetrics(dataToShow);
+}
+
+function updateTable(data) {
+    if (!dataTableBody) return;
+    dataTableBody.innerHTML = ''; 
+    const sortedForDisplay = [...data].reverse(); 
+
+    if (sortedForDisplay.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak pomiarów.</td></tr>';
+        return;
+    }
+
+    sortedForDisplay.forEach(record => {
+        const row = dataTableBody.insertRow();
+        
+        let colorClass = 'normal';
+        if (record.result < TARGET_RANGE_MIN) colorClass = 'hypo'; 
+        else if (record.result > TARGET_RANGE_MAX) colorClass = 'hyper'; 
+
+        const d = new Date(record.time);
+        
+        const cellDate = row.insertCell();
+        cellDate.innerHTML = `
+            <div style="font-weight:600; color:#333;">${d.toLocaleDateString('pl-PL')}</div>
+            <div style="font-size:0.85em; color:#888;">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
+        `;
+
+        const cellResult = row.insertCell();
+        cellResult.textContent = record.result;
+        cellResult.className = colorClass; 
+        cellResult.style.fontSize = '1.3em'; 
+
+        const cellDetails = row.insertCell();
+        cellDetails.innerHTML = `
+            <div style="font-size:0.9em; margin-bottom:2px;">${record.category}</div>
+            <div style="font-size:0.8em; color:#666;">
+                Ins: <b>${record.insulin}</b> | WW: <b>${record.carbs}</b>
+            </div>
+        `;
+    });
+}
+
+function updateMetrics(data) {
+    const avgEl = document.getElementById('avg-glucose');
+    const tirEl = document.getElementById('time-in-range');
+    const countEl = document.getElementById('count-glucose');
+
+    if (!avgEl) return;
+
+    if (data.length === 0) {
+        avgEl.textContent = '--';
+        tirEl.textContent = '--';
+        countEl.textContent = '0';
+        return;
+    }
+
+    const total = data.reduce((sum, r) => sum + parseInt(r.result), 0);
+    const average = (total / data.length).toFixed(0);
+    
+    const inRangeCount = data.filter(r => r.result >= TARGET_RANGE_MIN && r.result <= TARGET_RANGE_MAX).length;
+    const tirPercentage = ((inRangeCount / data.length) * 100).toFixed(0);
+
+    avgEl.textContent = `${average} mg/dL`;
+    tirEl.textContent = `${tirPercentage}%`;
+    countEl.textContent = data.length;
+}
+
+// ==========================================
+// 6. START APLIKACJI
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Najpierw sprawdzamy, czy ktoś jest zalogowany
+    checkSession();
+});
