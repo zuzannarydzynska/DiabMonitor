@@ -3,18 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiabMonitor | Wersja Mobilna</title>
+    <title>DiabMonitor | Logowanie</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <h1>🩸 DiabMonitor</h1>
-        <p>Twoja Historia Glikemii</p>
+        <p id="header-subtitle">Twój Asystent Cukrzycowy</p>
     </header>
 
-    <main class="container">
+    <main id="login-screen" class="container">
+        <section class="card">
+            <h2>👤 Profil Pacjenta</h2>
+            <p style="text-align:center; color:#666; margin-bottom:20px;">Wprowadź dane, aby rozpocząć</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Nazwa Użytkownika / Imię</label>
+                    <input type="text" id="username" required placeholder="np. Anna">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Hasło (lokalne)</label>
+                    <input type="password" id="password" required placeholder="******">
+                </div>
+
+                <div class="form-group">
+                    <label for="diabetesType">Typ Cukrzycy</label>
+                    <select id="diabetesType" required>
+                        <option value="" disabled selected>Wybierz typ...</option>
+                        
+                        <optgroup label="Główne typy">
+                            <option value="Typ 1">Typ 1 (Autoimmunologiczny, brak insuliny)</option>
+                            <option value="Typ 2">Typ 2 (Insulinooporność, styl życia)</option>
+                            <option value="Ciążowa">Cukrzyca ciążowa (Mija po ciąży)</option>
+                        </optgroup>
+
+                        <optgroup label="Inne specyficzne">
+                            <option value="MODY">Monogenowa (np. MODY)</option>
+                            <option value="LADA">LADA (Autoimmunologiczna dorosłych)</option>
+                            <option value="Wtórna">Wtórna (np. po zapaleniu trzustki)</option>
+                            <option value="Inny">Inny określony typ</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <button type="submit" class="save-btn" style="background-color: #27ae60;">Zaloguj / Utwórz Profil</button>
+            </form>
+        </section>
+    </main>
+
+    <main id="app-screen" class="container hidden">
         
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button id="logout-btn" style="background:none; border:none; color:#c0392b; cursor:pointer; font-weight:bold; text-decoration:underline;">Wyloguj się</button>
+        </div>
+
         <section class="card">
             <h2>➕ Dodaj Pomiar</h2>
             <form id="glucoseForm">
@@ -87,8 +132,7 @@
                             <th>Szczegóły</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </section>
