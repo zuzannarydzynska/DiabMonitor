@@ -1,6 +1,6 @@
-// ==========================================
-// 1. ZMIENNE GLOBALNE
-// ==========================================
+// ================= SKRYPT (JS) =================
+
+// --- ZMIENNE GLOBALNE ---
 let currentUser = null; 
 let glucoseData = [];   
 const usersDBKey = 'diabMonitor_users_v2'; 
@@ -8,83 +8,27 @@ const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 let currentFilter = '24h';
 
-// ==========================================
-// 2. FUNKCJE STARTOWE (URUCHAMIANE PO ZAŁADOWANIU STRONY)
-// ==========================================
+// --- START APLIKACJI ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Podpięcie obsługi formularzy logowania i rejestracji
+    console.log("Aplikacja startuje...");
+
+    // Podpięcie zdarzeń formularzy
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const glucoseForm = document.getElementById('glucoseForm');
 
-    // Obsługa logowania
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const userInput = document.getElementById('loginUser').value.trim();
-            const passInput = document.getElementById('loginPass').value;
-            
-            // Pobranie bazy użytkowników
-            const users = getAllUsers();
-            const foundUser = users.find(u => u.username === userInput && u.password === passInput);
-
-            if (foundUser) {
-                loginUser(foundUser);
-            } else {
-                alert("Błędny login lub hasło. Upewnij się, że masz konto.");
-            }
-        });
-    }
-
-    // Obsługa rejestracji
-    if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = document.getElementById('regUser').value.trim();
-            const pass = document.getElementById('regPass').value;
-
-            if (!validatePassword(pass)) {
-                alert("Hasło musi mieć min. 8 znaków, 1 wielką literę i 1 cyfrę!");
-                return;
-            }
-
-            const users = getAllUsers();
-            if (users.find(u => u.username === user)) {
-                alert("Taki użytkownik już istnieje!");
-                return;
-            }
-
-            const newUser = {
-                username: user,
-                password: pass,
-                measurements: []
-            };
-
-            users.push(newUser);
-            saveAllUsers(users);
-            
-            alert("Konto utworzone! Teraz możesz się zalogować.");
-            switchAuthView('login'); // Przełącz na widok logowania
-            registerForm.reset();
-        });
-    }
-
-    // Obsługa dodawania pomiaru
-    if (glucoseForm) {
-        glucoseForm.addEventListener('submit', handleAddMeasurement);
-    }
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (registerForm) registerForm.addEventListener('submit', handleRegister);
+    if (glucoseForm) glucoseForm.addEventListener('submit', handleAddMeasurement);
 
     // Ustawienia początkowe
     setTimeDefaults();
     
-    // Wymuszamy otwarcie okna logowania na start, jeśli nikt nie jest zalogowany
+    // Wymuszamy pokazanie okna na start
     openAuthModal();
 });
 
-// ==========================================
-// 3. LOGIKA UŻYTKOWNIKA (Auth)
-// ==========================================
-
+// --- OBSŁUGA BAZY DANYCH ---
 function getAllUsers() {
     const usersJSON = localStorage.getItem(usersDBKey);
     return usersJSON ? JSON.parse(usersJSON) : [];
@@ -94,161 +38,171 @@ function saveAllUsers(usersArray) {
     localStorage.setItem(usersDBKey, JSON.stringify(usersArray));
 }
 
-function validatePassword(pass) {
+// --- LOGOWANIE I REJESTRACJA ---
+
+function handleRegister(e) {
+    e.preventDefault();
+    const user = document.getElementById('regUser').value.trim();
+    const pass = document.getElementById('regPass').value;
+
+    // Walidacja hasła
     const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-    return regex.test(pass);
+    if (!regex.test(pass)) {
+        alert("Hasło musi mieć min. 8 znaków, 1 wielką literę i 1 cyfrę!");
+        return;
+    }
+
+    const users = getAllUsers();
+    if (users.find(u => u.username === user)) {
+        alert("Taki użytkownik już istnieje!");
+        return;
+    }
+
+    const newUser = {
+        username: user,
+        password: pass,
+        measurements: []
+    };
+
+    users.push(newUser);
+    saveAllUsers(users);
+    
+    alert("Konto utworzone! Możesz się zalogować.");
+    switchAuthView('login');
+    document.getElementById('registerForm').reset();
 }
 
-// Funkcja logowania - to tutaj dzieje się "magia" po kliknięciu Wejdź
-function loginUser(userObj) {
-    console.log("Logowanie udane:", userObj.username); // Diagnostyka w konsoli
-    currentUser = userObj;
-    glucoseData = userObj.measurements || [];
+function handleLogin(e) {
+    e.preventDefault();
+    const userInput = document.getElementById('loginUser').value.trim();
+    const passInput = document.getElementById('loginPass').value;
     
-    // 1. Zmień wygląd nagłówka (feedback dla użytkownika)
-    const authBtn = document.getElementById('authBtn');
-    const welcomeMsg = document.getElementById('welcomeMsg');
-    const userNameDisplay = document.getElementById('userNameDisplay');
+    const users = getAllUsers();
+    const foundUser = users.find(u => u.username === userInput && u.password === passInput);
 
-    if (authBtn) {
-        authBtn.innerHTML = '👤'; 
-        authBtn.style.color = '#27ae60'; // ZMIANA KOLORU NA ZIELONY (Jesteś zalogowana)
-        authBtn.title = "Twój Profil (Kliknij aby wylogować)";
+    if (foundUser) {
+        // Logowanie udane
+        currentUser = foundUser;
+        glucoseData = foundUser.measurements || [];
+        
+        // UI Update
+        updateAuthUI(true);
+        refreshViews();
+        closeAuthModal();
+    } else {
+        alert("Błędny login lub hasło. Jeśli nie masz konta, kliknij 'Zarejestruj się'.");
     }
-    
-    if (welcomeMsg && userNameDisplay) {
-        welcomeMsg.style.display = 'block';
-        userNameDisplay.textContent = currentUser.username;
-    }
-
-    // 2. Zamknij okno modalne
-    closeAuthModal();
-
-    // 3. Załaduj dane do profilu (JSON)
-    if(document.getElementById('jsonDataBox')) {
-        document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
-    }
-    
-    // 4. Odśwież tabelę i wykresy
-    refreshViews(); 
 }
 
 function logout() {
     currentUser = null;
     glucoseData = [];
+    updateAuthUI(false);
     
-    // Reset wyglądu nagłówka
-    const authBtn = document.getElementById('authBtn');
-    if (authBtn) {
-        authBtn.style.color = '#333'; // Powrót do czarnego koloru
-        authBtn.title = "Zaloguj się";
-    }
-    document.getElementById('welcomeMsg').style.display = 'none';
     document.getElementById('loginForm').reset();
-    
-    alert("Zostałeś wylogowany.");
-    
-    // Wyczyść widok i pokaż logowanie
     refreshViews(); 
+    alert("Wylogowano.");
+    
     openAuthModal();
     switchAuthView('login');
+}
+
+function updateAuthUI(isLoggedIn) {
+    const authBtn = document.getElementById('authBtn');
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+
+    if (isLoggedIn) {
+        authBtn.style.color = '#27ae60'; // Zielony
+        authBtn.title = "Twój Profil";
+        welcomeMsg.style.display = 'block';
+        userNameDisplay.textContent = currentUser.username;
+        // Wypełnij JSON
+        document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
+    } else {
+        authBtn.style.color = '#333'; // Czarny
+        authBtn.title = "Zaloguj się";
+        welcomeMsg.style.display = 'none';
+        userNameDisplay.textContent = '';
+    }
 }
 
 function saveUserData() {
     if (!currentUser) return;
     currentUser.measurements = glucoseData;
+    
     const users = getAllUsers();
     const index = users.findIndex(u => u.username === currentUser.username);
     if (index !== -1) {
         users[index] = currentUser;
         saveAllUsers(users);
     }
-    // Aktualizuj podgląd JSON w profilu
-    if(document.getElementById('jsonDataBox')) {
-        document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
-    }
+    // Aktualizacja podglądu JSON
+    if(currentUser) document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
 }
 
-// ==========================================
-// 4. OBSŁUGA OKNA MODALNEGO (Logowanie/Profil)
-// ==========================================
-
-// Tę funkcję przypisaliśmy do przycisku w HTML: onclick="openAuthModal()"
+// --- OBSŁUGA MODALA ---
 function openAuthModal() {
     const modal = document.getElementById('authModal');
-    if (!modal) return;
-
     modal.style.display = 'flex';
     
-    // Kluczowy moment: Co pokazać w oknie?
     if (currentUser) {
-        // Jeśli jestem zalogowany -> pokaż PROFIL (z przyciskiem wyloguj)
-        switchAuthView('profile'); 
+        switchAuthView('profile');
     } else {
-        // Jeśli NIE jestem zalogowany -> pokaż formularz LOGOWANIA
-        switchAuthView('login'); 
+        switchAuthView('login');
     }
 }
 
 function closeAuthModal() {
-    const modal = document.getElementById('authModal');
-    if (modal) modal.style.display = 'none';
-}
-
-function switchAuthView(viewName) {
-    const loginView = document.getElementById('loginView');
-    const registerView = document.getElementById('registerView');
-    const profileView = document.getElementById('profileView');
-
-    if (loginView) loginView.style.display = 'none';
-    if (registerView) registerView.style.display = 'none';
-    if (profileView) profileView.style.display = 'none';
-
-    if (viewName === 'login' && loginView) loginView.style.display = 'block';
-    if (viewName === 'register' && registerView) registerView.style.display = 'block';
-    if (viewName === 'profile' && profileView) profileView.style.display = 'block';
-}
-
-// Kliknięcie poza oknem zamyka modal (chyba że nie jesteś zalogowany - wtedy wymusza logowanie)
-window.onclick = function(event) {
-    const modal = document.getElementById('authModal');
-    if (event.target == modal) {
-        if(currentUser) modal.style.display = "none";
+    // Pozwól zamknąć tylko jeśli jest zalogowany
+    if (currentUser) {
+        document.getElementById('authModal').style.display = 'none';
+    } else {
+        // Opcjonalnie: alert("Musisz się zalogować!");
     }
 }
 
-// ==========================================
-// 5. OBSŁUGA POMIARÓW (Dodawanie/Tabela)
-// ==========================================
+function switchAuthView(viewName) {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('registerView').style.display = 'none';
+    document.getElementById('profileView').style.display = 'none';
 
+    if (viewName === 'login') document.getElementById('loginView').style.display = 'block';
+    if (viewName === 'register') document.getElementById('registerView').style.display = 'block';
+    if (viewName === 'profile') document.getElementById('profileView').style.display = 'block';
+}
+
+// --- LOGIKA POMIARÓW ---
 function handleAddMeasurement(e) {
     e.preventDefault(); 
     
     if (!currentUser) {
-        alert("Musisz się zalogować, aby zapisać wynik!");
+        alert("Najpierw się zaloguj!");
         openAuthModal();
         return;
     }
 
     const resultInput = document.getElementById('result');
     const timeInput = document.getElementById('time');
-    const categoryInput = document.getElementById('category');
-    const insulinInput = document.getElementById('insulin');
-    const carbsInput = document.getElementById('carbs');
-
-    if (!resultInput || !timeInput) return;
+    
+    // Pobieranie wartości
+    const result = parseInt(resultInput.value);
+    const time = timeInput.value;
+    const category = document.getElementById('category').value;
+    const insulin = document.getElementById('insulin').value || "-";
+    const carbs = document.getElementById('carbs').value || "-";
 
     const newRecord = { 
         id: Date.now(),
-        result: parseInt(resultInput.value), 
-        time: timeInput.value, 
-        category: categoryInput.value, 
-        insulin: insulinInput.value !== "" ? insulinInput.value : "-", 
-        carbs: carbsInput.value !== "" ? carbsInput.value : "-" 
+        result: result, 
+        time: time, 
+        category: category, 
+        insulin: insulin, 
+        carbs: carbs 
     };
 
     glucoseData.push(newRecord);
-    saveUserData(); // Zapis do usera
+    saveUserData();
     
     refreshViews(); 
     document.getElementById('glucoseForm').reset();
@@ -256,6 +210,7 @@ function handleAddMeasurement(e) {
 }
 
 function getFilteredData() {
+    // Sortowanie chronologiczne
     glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
     if (currentFilter === 'all') return glucoseData;
 
@@ -283,9 +238,9 @@ function refreshViews() {
 
 function updateTable(data) {
     const tableBody = document.querySelector('#dataTable tbody');
-    if (!tableBody) return;
-    
     tableBody.innerHTML = ''; 
+    
+    // Do wyświetlania odwracamy (najnowsze na górze)
     const sortedForDisplay = [...data].reverse(); 
 
     if (sortedForDisplay.length === 0) {
@@ -301,8 +256,7 @@ function updateTable(data) {
 
         const d = new Date(record.time);
         
-        const cellDate = row.insertCell();
-        cellDate.innerHTML = `
+        row.insertCell().innerHTML = `
             <div style="font-weight:600; color:#333;">${d.toLocaleDateString('pl-PL')}</div>
             <div style="font-size:0.85em; color:#888;">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
         `;
@@ -312,8 +266,7 @@ function updateTable(data) {
         cellResult.className = colorClass;
         cellResult.style.fontSize = '1.3em'; 
 
-        const cellDetails = row.insertCell();
-        cellDetails.innerHTML = `
+        row.insertCell().innerHTML = `
             <div style="font-size:0.9em; margin-bottom:2px;">${record.category}</div>
             <div style="font-size:0.8em; color:#666;">
                 Ins: <b>${record.insulin}</b> | WW: <b>${record.carbs}</b>
@@ -326,8 +279,6 @@ function updateMetrics(data) {
     const avgEl = document.getElementById('avg-glucose');
     const tirEl = document.getElementById('time-in-range');
     const countEl = document.getElementById('count-glucose');
-
-    if (!avgEl || !tirEl || !countEl) return;
 
     if (data.length === 0) {
         avgEl.textContent = '--';
