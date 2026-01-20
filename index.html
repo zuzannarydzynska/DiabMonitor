@@ -9,44 +9,6 @@
 
 </head>
 <body>
-<div class="container">
-    <h2>Rejestracja</h2>
-   <input id="regUser" placeholder="Login">
-<input id="regPass" type="password" placeholder="Hasło">
-<button type="button" id="regBtn">Zarejestruj</button>
-
-
-    <hr>
-
-    <h2>Logowanie</h2>
-    <input id="logUser" placeholder="Login">
-<input id="logPass" type="password" placeholder="Hasło">
-<button type="button" id="logBtn">Zaloguj</button>
-
-
-    <p id="msg"></p>
-</div>
-
-
-    <title>Profil</title>
-<h2>Profil użytkownika</h2>
-<p id="info"></p>
-<button type="button" onclick="logout()">Wyloguj</button>
-
-<script>
-    if (localStorage.getItem("logged") !== "true") {
-        window.location.href = "index.html";
-    }
-
-    document.getElementById("info").innerText =
-        "Zalogowany: " + localStorage.getItem("user");
-
-    function logout() {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-</script>
-    
     <header>
         <h1>🩸 DiabMonitor</h1>
         <p>Twoja Historia Glikemii</p>
@@ -137,6 +99,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
