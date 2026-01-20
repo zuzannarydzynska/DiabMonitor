@@ -21,6 +21,25 @@
     <button onclick="login()">Zaloguj</button>
 
     <p id="msg"></p>
+
+<h2>Profil użytkownika</h2>
+<p id="info"></p>
+<button onclick="logout()">Wyloguj</button>
+
+<script>
+    if (localStorage.getItem("logged") !== "true") {
+        window.location.href = "index.html";
+    }
+
+    info.innerText = "Zalogowany: " + localStorage.getItem("user");
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+</script>
+
+    
 </div>
 
     <header>
@@ -113,5 +132,6 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
