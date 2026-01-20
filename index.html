@@ -3,77 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiabMonitor | System Glikemii</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>DiabMonitor | Jedna Kolumna</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <header>
         <h1>🩸 DiabMonitor</h1>
+        <p>Rejestr Glikemii</p>
     </header>
 
     <main class="container">
         
-        <div class="top-section">
-            
-            <section class="card">
-                <h2>➕ Dodaj Pomiar</h2>
-                <form id="glucoseForm">
-                    <div class="form-group">
-                        <label for="result">Wynik (mg/dL)</label>
-                        <input type="number" id="result" required min="10" max="600">
-                    </div>
-                    <div class="form-group">
-                        <label for="time">Data</label>
-                        <input type="datetime-local" id="time" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="category">Kategoria</label>
-                        <select id="category">
-                            <option value="Na czczo">Na czczo</option>
-                            <option value="Przed posiłkiem">Przed posiłkiem</option>
-                            <option value="Po posiłku">Po posiłku</option>
-                            <option value="Inne">Inne</option>
-                        </select>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <div class="form-group" style="flex:1">
-                            <label for="insulin">Insulina (j)</label>
-                            <input type="number" id="insulin" placeholder="0">
-                        </div>
-                        <div class="form-group" style="flex:1">
-                            <label for="carbs">WW</label>
-                            <input type="number" id="carbs" step="0.5" placeholder="0">
-                        </div>
-                    </div>
-                    <button type="submit">Zapisz</button>
-                </form>
-            </section>
-
-            <section class="card">
-                <h2>📈 Analiza</h2>
+        <section class="card">
+            <h2>➕ Dodaj Nowy Pomiar</h2>
+            <form id="glucoseForm">
+                <div class="form-group">
+                    <label for="result">Wynik (mg/dL)</label>
+                    <input type="number" id="result" required min="10" max="600" placeholder="np. 110">
+                </div>
                 
-                <div id="summary-metrics">
-                    <div>Średnia: <span id="avg-glucose" class="metric-val">--</span></div>
-                    <div>TIR: <span id="time-in-range" class="metric-val">--</span></div>
+                <div class="form-group">
+                    <label for="time">Data i Czas</label>
+                    <input type="datetime-local" id="time" required>
                 </div>
-
-                <div class="filter-controls">
-                    <button class="filter-btn active" onclick="setFilter('24h', this)">24h</button>
-                    <button class="filter-btn" onclick="setFilter('7d', this)">7 Dni</button>
-                    <button class="filter-btn" onclick="setFilter('30d', this)">30 Dni</button>
-                    <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie</button>
+                
+                <div class="form-group">
+                    <label for="category">Kategoria</label>
+                    <select id="category">
+                        <option value="Na czczo">Na czczo</option>
+                        <option value="Przed posiłkiem">Przed posiłkiem</option>
+                        <option value="Po posiłku">Po posiłku</option>
+                        <option value="Inne">Inne</option>
+                    </select>
                 </div>
-
-                <div class="chart-container">
-                    <canvas id="glucoseChart"></canvas>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="insulin">Insulina (j)</label>
+                        <input type="number" id="insulin" placeholder="0">
+                    </div>
+                    <div class="form-group half">
+                        <label for="carbs">WW</label>
+                        <input type="number" id="carbs" step="0.5" placeholder="0">
+                    </div>
                 </div>
-            </section>
-        </div>
+                
+                <button type="submit" class="save-btn">Zapisz Wynik</button>
+            </form>
+        </section>
 
         <section class="card">
-            <h2>📜 Historia</h2>
+            <h2>📊 Panel Analizy</h2>
+            
+            <div id="summary-metrics">
+                <div class="metric-box">
+                    <div class="metric-label">Średnia</div>
+                    <div class="metric-val" id="avg-glucose">--</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">TIR (Norma)</div>
+                    <div class="metric-val" id="time-in-range">--</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Pomiary</div>
+                    <div class="metric-val" id="count-glucose">--</div>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="setFilter('24h', this)">24h</button>
+                <button class="filter-btn" onclick="setFilter('7d', this)">7 Dni</button>
+                <button class="filter-btn" onclick="setFilter('30d', this)">30 Dni</button>
+                <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie</button>
+            </div>
+
             <div class="table-wrapper">
                 <table id="dataTable">
                     <thead>
@@ -85,13 +89,4 @@
                             <th>WW</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <script src="script.js"></script>
-</body>
-</html>
+                    <tbody>
