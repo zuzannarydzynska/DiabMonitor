@@ -9,22 +9,19 @@
 <body>
 <div class="container">
     <h2>Rejestracja</h2>
-    <input id="regUser" placeholder="Login">
+    <input id="regUser" type="text" placeholder="Login">
     <input id="regPass" type="password" placeholder="Hasło">
-    <button onclick="register()">Zarejestruj</button>
-    <button type="button" onclick="register()">Zarejestruj</button>
-
+    <button type="button" id="regBtn">Zarejestruj</button>
 
     <hr>
 
     <h2>Logowanie</h2>
-    <input id="logUser" placeholder="Login">
+    <input id="logUser" type="text" placeholder="Login">
     <input id="logPass" type="password" placeholder="Hasło">
-    <button onclick="login()">Zaloguj</button>
-<button type="button" onclick="login()">Zaloguj</button>
-
+    <button type="button" id="logBtn">Zaloguj</button>
 
     <p id="msg"></p>
+</div>
 
 <h2>Profil użytkownika</h2>
 <p id="info"></p>
@@ -136,6 +133,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
