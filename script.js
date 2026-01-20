@@ -1,53 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-    const regBtn = document.getElementById("regBtn");
-    const logBtn = document.getElementById("logBtn");
-
-    if (regBtn) {
-        regBtn.addEventListener("click", function () {
-            const user = document.getElementById("regUser").value;
-            const pass = document.getElementById("regPass").value;
-            const msg = document.getElementById("msg");
-
-            if (!user || !pass) {
-                msg.innerText = "Uzupełnij wszystkie pola";
-                return;
-            }
-
-            const regex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
-
-            if (!regex.test(pass)) {
-                msg.innerText = "Hasło: min. 6 znaków, 1 duża litera i 1 cyfra";
-                return;
-            }
-
-            localStorage.setItem("user", user);
-            localStorage.setItem("pass", pass);
-
-            msg.innerText = "Rejestracja OK";
-        });
-    }
-
-    if (logBtn) {
-        logBtn.addEventListener("click", function () {
-            const user = document.getElementById("logUser").value;
-            const pass = document.getElementById("logPass").value;
-            const msg = document.getElementById("msg");
-
-            if (
-                user === localStorage.getItem("user") &&
-                pass === localStorage.getItem("pass")
-            ) {
-                localStorage.setItem("logged", "true");
-                window.location.href = "profile.html";
-            } else {
-                msg.innerText = "Błędne dane logowania";
-            }
-        });
-    }
-
-});
-
 
 // ==========================================
 // 1. ZMIENNE GLOBALNE I KONFIGURACJA
@@ -270,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeDefaults();
     refreshViews();
 });
+
 
 
 
