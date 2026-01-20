@@ -1,116 +1,145 @@
-/* --- Reset --- */
-* { box-sizing: border-box; }
+let glucoseData = []; 
+let userProfile = null;
+let currentFilter = '24h';
 
-body { 
-    font-family: 'Segoe UI', sans-serif; 
-    background-color: #f4f7f6; 
-    color: #333; 
-    margin: 0; 
-    padding: 15px; 
+const glucoseForm = document.getElementById('glucoseForm');
+const loginForm = document.getElementById('loginForm');
+const dataTableBody = document.querySelector('#dataTable tbody');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
+const headerSubtitle = document.getElementById('header-subtitle');
+
+// --- SESJA I LOGOWANIE ---
+function checkSession() {
+    const storedUser = localStorage.getItem('userProfile');
+    if (storedUser) {
+        userProfile = JSON.parse(storedUser);
+        showAppScreen();
+    } else {
+        showLoginScreen();
+    }
 }
 
-/* --- UKRYWANIE EKRANÓW --- */
-.hidden { display: none !important; }
-
-/* --- KONTENER PIONOWY --- */
-.container { 
-    max-width: 500px; 
-    margin: 0 auto;   
-    display: flex;
-    flex-direction: column; 
-    gap: 20px; 
+function showLoginScreen() {
+    loginScreen.classList.remove('hidden');
+    appScreen.classList.add('hidden');
 }
 
-header { text-align: center; margin-bottom: 10px; }
-
-/* --- KARTY --- */
-.card { 
-    background: white; 
-    padding: 20px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+function showAppScreen() {
+    loginScreen.classList.add('hidden');
+    appScreen.classList.remove('hidden');
+    headerSubtitle.textContent = `Pacjent: ${userProfile.name} | ${userProfile.diabetesType}`;
+    loadData();
+    setTimeDefaults();
+    refreshViews();
 }
 
-h2 { 
-    margin-top: 0; 
-    border-bottom: 2px solid #3498db; 
-    padding-bottom: 10px; 
-    color: #2c3e50; 
-    text-align: center;
-    font-size: 1.2rem;
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const type = document.getElementById('diabetesType').value;
+    if(username && type) {
+        userProfile = { name: username, diabetesType: type };
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        showAppScreen();
+    }
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+    if(confirm('Wylogować?')) {
+        localStorage.removeItem('userProfile');
+        location.reload();
+    }
+});
+
+// --- DANE I FORMULARZ ---
+function loadData() {
+    const stored = localStorage.getItem('glucoseRecords');
+    if(stored) glucoseData = JSON.parse(stored);
 }
 
-/* --- FORMULARZE --- */
-.form-group { margin-bottom: 15px; width: 100%; }
-label { display: block; font-weight: 600; margin-bottom: 5px; color: #555; }
+glucoseForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const result = parseInt(document.getElementById('result').value);
+    const time = document.getElementById('time').value;
+    const category = document.getElementById('category').value;
+    const insulin = document.getElementById('insulin').value || "-";
+    const carbs = document.getElementById('carbs').value || "-";
 
-input, select { 
-    width: 100%; 
-    padding: 12px; 
-    border: 1px solid #ddd; 
-    border-radius: 8px; 
-    font-size: 16px; 
-    background-color: #fafafa;
+    glucoseData.push({ result, time, category, insulin, carbs });
+    localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
+    
+    refreshViews();
+    glucoseForm.reset();
+    setTimeDefaults();
+});
+
+function setTimeDefaults() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('time').value = now.toISOString().slice(0, 16);
 }
 
-optgroup { font-weight: bold; color: #2c3e50; font-style: normal; }
+// --- TABELA I STATYSTYKI ---
+function refreshViews() {
+    // Filtrowanie
+    glucoseData.sort((a,b) => new Date(a.time) - new Date(b.time));
+    let data = glucoseData;
+    
+    if(currentFilter !== 'all') {
+        const now = new Date();
+        const hours = currentFilter === '7d' ? 168 : 24;
+        const cutoff = now.getTime() - (hours * 60 * 60 * 1000);
+        data = glucoseData.filter(r => new Date(r.time).getTime() > cutoff);
+    }
 
-.save-btn { 
-    width: 100%; 
-    background: #3498db; 
-    color: white; 
-    border: none; 
-    padding: 15px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    font-weight: bold; 
-    font-size: 1.1rem;
-    margin-top: 10px;
+    // Tabela
+    dataTableBody.innerHTML = '';
+    const displayData = [...data].reverse();
+    
+    if(displayData.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px">Brak danych</td></tr>';
+    } else {
+        displayData.forEach(r => {
+            const row = dataTableBody.insertRow();
+            let color = 'normal';
+            if(r.result < 70) color = 'hypo';
+            else if(r.result > 180) color = 'hyper';
+            
+            const d = new Date(r.time);
+            row.insertCell().innerHTML = `<b>${d.toLocaleDateString()}</b><br><small>${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>`;
+            
+            const resCell = row.insertCell();
+            resCell.textContent = r.result;
+            resCell.className = color;
+            resCell.style.fontSize = '1.2em';
+            
+            row.insertCell().innerHTML = `<small>${r.category}<br>Ins: ${r.insulin} | WW: ${r.carbs}</small>`;
+        });
+    }
+
+    // Statystyki
+    const avgEl = document.getElementById('avg-glucose');
+    const tirEl = document.getElementById('time-in-range');
+    const countEl = document.getElementById('count-glucose');
+
+    if(data.length === 0) {
+        avgEl.innerText = '--'; tirEl.innerText = '--'; countEl.innerText = '0';
+    } else {
+        const total = data.reduce((s, r) => s + parseInt(r.result), 0);
+        const inRange = data.filter(r => r.result >= 70 && r.result <= 180).length;
+        
+        avgEl.innerText = (total / data.length).toFixed(0) + ' mg/dL';
+        tirEl.innerText = ((inRange / data.length) * 100).toFixed(0) + '%';
+        countEl.innerText = data.length;
+    }
 }
-.save-btn:hover { opacity: 0.9; }
 
-/* --- STATYSTYKI --- */
-#summary-metrics { 
-    display: flex; 
-    flex-direction: column; 
-    margin-bottom: 20px; 
-    background: #f8f9fa; 
-    border-radius: 8px; 
-    border: 1px solid #eee;
-}
+window.setFilter = function(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshViews();
+};
 
-.metric-box { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-.metric-box:last-child { border-bottom: none; }
-.metric-label { color: #7f8c8d; font-size: 0.95rem; }
-.metric-val { font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
-
-/* --- FILTRY --- */
-.filter-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 25px; }
-.filter-btn { 
-    width: 100%; 
-    background: #e0e0e0; 
-    border: none; 
-    padding: 12px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    font-size: 1rem; 
-    font-weight: 500; 
-}
-.filter-btn.active { background: #3498db; color: white; }
-
-/* --- TABELA --- */
-.log-title { margin-bottom: 10px; color: #555; font-size: 1.1rem; }
-.table-wrapper { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { background: #ecf0f1; padding: 10px; text-align: left; color: #555; font-size: 0.9rem; }
-td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vertical-align: middle; }
-
-.hypo { color: #e74c3c; font-weight: bold; } 
-.normal { color: #27ae60; font-weight: bold; } 
-.hyper { color: #d35400; font-weight: bold; }
+document.addEventListener('DOMContentLoaded', checkSession);
