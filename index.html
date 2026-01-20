@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiabMonitor | Logowanie</title>
+    <title>DiabMonitor | Final</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,11 +16,11 @@
     <main id="login-screen" class="container">
         <section class="card">
             <h2>👤 Profil Pacjenta</h2>
-            <p style="text-align:center; color:#666; margin-bottom:20px;">Zaloguj się, aby kontynuować</p>
+            <p style="text-align:center; color:#666; margin-bottom:20px;">Wprowadź dane, aby rozpocząć</p>
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Imię / Nazwa</label>
+                    <label for="username">Imię</label>
                     <input type="text" id="username" required placeholder="np. Anna">
                 </div>
 
@@ -32,7 +32,7 @@
                 <div class="form-group">
                     <label for="diabetesType">Typ Cukrzycy</label>
                     <select id="diabetesType" required>
-                        <option value="" disabled selected>-- Wybierz typ --</option>
+                        <option value="" disabled selected>-- Wybierz --</option>
                         
                         <optgroup label="Główne typy">
                             <option value="Typ 1">Typ 1 (Autoimmunologiczny)</option>
@@ -40,11 +40,11 @@
                             <option value="Ciążowa">Cukrzyca ciążowa</option>
                         </optgroup>
 
-                        <optgroup label="Inne specyficzne">
+                        <optgroup label="Inne">
                             <option value="MODY">Monogenowa (np. MODY)</option>
                             <option value="LADA">LADA</option>
-                            <option value="Wtórna">Wtórna (trzustkowa/polekowa)</option>
-                            <option value="Inny">Inny określony typ</option>
+                            <option value="Wtórna">Wtórna</option>
+                            <option value="Inny">Inny typ</option>
                         </optgroup>
                     </select>
                 </div>
@@ -79,4 +79,63 @@
                         <option value="Na czczo">Na czczo</option>
                         <option value="Przed posiłkiem">Przed posiłkiem</option>
                         <option value="Po posiłku">Po posiłku</option>
-                        <option value="Inne">Inne</
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="insulin">Insulina (j)</label>
+                    <input type="number" id="insulin" placeholder="Opcjonalne">
+                </div>
+                
+                <div class="form-group">
+                    <label for="carbs">WW</label>
+                    <input type="number" id="carbs" step="0.5" placeholder="Opcjonalne">
+                </div>
+                
+                <button type="submit" class="save-btn">Zapisz Wynik</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>📊 Statystyki</h2>
+            <div id="summary-metrics">
+                <div class="metric-box">
+                    <span class="metric-label">Średnia</span>
+                    <span class="metric-val" id="avg-glucose">--</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">TIR</span>
+                    <span class="metric-val" id="time-in-range">--</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Pomiary</span>
+                    <span class="metric-val" id="count-glucose">--</span>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="setFilter('24h', this)">24h</button>
+                <button class="filter-btn" onclick="setFilter('7d', this)">7 Dni</button>
+                <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie</button>
+            </div>
+
+            <h3 class="log-title">Dziennik</h3>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Wynik</th>
+                            <th>Info</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
