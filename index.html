@@ -25,31 +25,31 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Hasło (lokalne)</label>
+                    <label for="password">Hasło</label>
                     <input type="password" id="password" required placeholder="******">
                 </div>
 
                 <div class="form-group">
                     <label for="diabetesType">Typ Cukrzycy</label>
                     <select id="diabetesType" required>
-                        <option value="" disabled selected>Wybierz typ...</option>
+                        <option value="" disabled selected>-- Wybierz typ --</option>
                         
-                        <optgroup label="Główne typy">
+                        <optgroup label="Najczęstsze typy">
                             <option value="Typ 1">Typ 1 (Autoimmunologiczny, brak insuliny)</option>
                             <option value="Typ 2">Typ 2 (Insulinooporność, styl życia)</option>
                             <option value="Ciążowa">Cukrzyca ciążowa (Mija po ciąży)</option>
                         </optgroup>
 
-                        <optgroup label="Inne specyficzne">
+                        <optgroup label="Inne specyficzne typy">
                             <option value="MODY">Monogenowa (np. MODY)</option>
                             <option value="LADA">LADA (Autoimmunologiczna dorosłych)</option>
-                            <option value="Wtórna">Wtórna (np. po zapaleniu trzustki)</option>
+                            <option value="Wtórna">Wtórna (np. choroby trzustki, leki)</option>
                             <option value="Inny">Inny określony typ</option>
                         </optgroup>
                     </select>
                 </div>
 
-                <button type="submit" class="save-btn" style="background-color: #27ae60;">Zaloguj / Utwórz Profil</button>
+                <button type="submit" class="save-btn" style="background-color: #27ae60;">Zaloguj się</button>
             </form>
         </section>
     </main>
@@ -116,10 +116,10 @@
             </div>
 
             <div class="filter-controls">
-                <button class="filter-btn active" onclick="setFilter('24h', this)">Ostatnie 24h</button>
-                <button class="filter-btn" onclick="setFilter('7d', this)">Ostatnie 7 Dni</button>
-                <button class="filter-btn" onclick="setFilter('30d', this)">Ostatnie 30 Dni</button>
-                <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie Pomiary</button>
+                <button class="filter-btn active" onclick="setFilter('24h', this)">24h</button>
+                <button class="filter-btn" onclick="setFilter('7d', this)">7 Dni</button>
+                <button class="filter-btn" onclick="setFilter('30d', this)">30 Dni</button>
+                <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie</button>
             </div>
 
             <h3 class="log-title">Dziennik</h3>
