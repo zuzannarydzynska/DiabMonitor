@@ -2,7 +2,7 @@
 // 1. ZMIENNE I KONFIGURACJA
 // ==========================================
 let glucoseData = []; 
-let userProfile = null; // Przechowuje dane o użytkowniku
+let userProfile = null; // Tutaj będziemy trzymać dane pacjenta
 
 const glucoseForm = document.getElementById('glucoseForm');
 const loginForm = document.getElementById('loginForm');
@@ -19,6 +19,7 @@ const TARGET_RANGE_MAX = 180;
 // 2. OBSŁUGA LOGOWANIA I SESJI
 // ==========================================
 
+// Sprawdzamy na starcie, czy użytkownik już istnieje w pamięci
 function checkSession() {
     const storedUser = localStorage.getItem('userProfile');
     if (storedUser) {
@@ -38,35 +39,33 @@ function showAppScreen() {
     loginScreen.classList.add('hidden');
     appScreen.classList.remove('hidden');
     
-    // Aktualizacja nagłówka o imię i typ cukrzycy
+    // Aktualizujemy nagłówek strony o imię i typ cukrzycy
     if (userProfile) {
         headerSubtitle.textContent = `Pacjent: ${userProfile.name} | ${userProfile.diabetesType}`;
     }
     
-    // Załaduj dane po zalogowaniu
+    // Po zalogowaniu ładujemy dane i odświeżamy widok
     loadDataFromLocalStorage();
     setTimeDefaults();
     refreshViews();
 }
 
-// Obsługa formularza logowania
+// Logika przycisku "Zaloguj się"
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value; // W prawdziwej aplikacji hasło wysyłamy na serwer!
         const diabetesType = document.getElementById('diabetesType').value;
+        // Hasło jest tutaj tylko "pro forma" (symulacja), w prawdziwej apce wysyłalibyśmy je na serwer.
 
-        // Prosta walidacja (tylko demo)
         if (username && diabetesType) {
             userProfile = {
                 name: username,
-                diabetesType: diabetesType,
-                loginTime: new Date().toISOString()
+                diabetesType: diabetesType
             };
             
-            // Zapisz profil w przeglądarce
+            // Zapisz profil w przeglądarce na stałe
             localStorage.setItem('userProfile', JSON.stringify(userProfile));
             
             showAppScreen();
@@ -74,13 +73,12 @@ if (loginForm) {
     });
 }
 
-// Obsługa wylogowania
+// Logika przycisku "Wyloguj się"
 document.getElementById('logout-btn').addEventListener('click', function() {
     if(confirm("Czy na pewno chcesz się wylogować?")) {
-        localStorage.removeItem('userProfile');
+        localStorage.removeItem('userProfile'); // Usuń sesję użytkownika
         userProfile = null;
-        glucoseData = []; // Czyścimy widok danych (zostają w pamięci pod kluczem, ale znikają z ekranu)
-        location.reload(); // Odśwież stronę
+        location.reload(); // Odśwież stronę, by wrócić do logowania
     }
 });
 
@@ -89,8 +87,6 @@ document.getElementById('logout-btn').addEventListener('click', function() {
 // ==========================================
 
 function saveDataToLocalStorage() {
-    // Zapisujemy dane powiązane z konkretnym użytkownikiem (opcjonalnie można rozbudować o klucz per user)
-    // Na razie prosta wersja: jedna baza pomiarów na przeglądarkę
     localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
 }
 
@@ -102,7 +98,7 @@ function loadDataFromLocalStorage() {
 }
 
 // ==========================================
-// 4. OBSŁUGA FORMULARZA GLIKEMII
+// 4. OBSŁUGA DODAWANIA WYNIKU
 // ==========================================
 
 if (glucoseForm) {
