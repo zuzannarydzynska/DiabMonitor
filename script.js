@@ -1,232 +1,258 @@
 // ==========================================
 // 1. ZMIENNE GLOBALNE
 // ==========================================
-let currentUser = null; // Przechowuje obiekt zalogowanego użytkownika
-let glucoseData = [];   // Pomiary AKTUALNEGO użytkownika
-const usersDBKey = 'diabMonitor_users_v2'; // Klucz bazy danych w LocalStorage
-
-const glucoseForm = document.getElementById('glucoseForm');
-const dataTableBody = document.querySelector('#dataTable tbody');
-let currentFilter = '24h';
-
+let currentUser = null; 
+let glucoseData = [];   
+const usersDBKey = 'diabMonitor_users_v2'; 
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
+let currentFilter = '24h';
 
 // ==========================================
-// 2. SYSTEM UŻYTKOWNIKÓW (Auth & JSON)
+// 2. FUNKCJE STARTOWE (URUCHAMIANE PO ZAŁADOWANIU STRONY)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Podpięcie obsługi formularzy logowania i rejestracji
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const glucoseForm = document.getElementById('glucoseForm');
+
+    // Obsługa logowania
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userInput = document.getElementById('loginUser').value.trim();
+            const passInput = document.getElementById('loginPass').value;
+            
+            // Pobranie bazy użytkowników
+            const users = getAllUsers();
+            const foundUser = users.find(u => u.username === userInput && u.password === passInput);
+
+            if (foundUser) {
+                loginUser(foundUser);
+            } else {
+                alert("Błędny login lub hasło. Upewnij się, że masz konto.");
+            }
+        });
+    }
+
+    // Obsługa rejestracji
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = document.getElementById('regUser').value.trim();
+            const pass = document.getElementById('regPass').value;
+
+            if (!validatePassword(pass)) {
+                alert("Hasło musi mieć min. 8 znaków, 1 wielką literę i 1 cyfrę!");
+                return;
+            }
+
+            const users = getAllUsers();
+            if (users.find(u => u.username === user)) {
+                alert("Taki użytkownik już istnieje!");
+                return;
+            }
+
+            const newUser = {
+                username: user,
+                password: pass,
+                measurements: []
+            };
+
+            users.push(newUser);
+            saveAllUsers(users);
+            
+            alert("Konto utworzone! Teraz możesz się zalogować.");
+            switchAuthView('login'); // Przełącz na widok logowania
+            registerForm.reset();
+        });
+    }
+
+    // Obsługa dodawania pomiaru
+    if (glucoseForm) {
+        glucoseForm.addEventListener('submit', handleAddMeasurement);
+    }
+
+    // Ustawienia początkowe
+    setTimeDefaults();
+    
+    // Wymuszamy otwarcie okna logowania na start, jeśli nikt nie jest zalogowany
+    openAuthModal();
+});
+
+// ==========================================
+// 3. LOGIKA UŻYTKOWNIKA (Auth)
 // ==========================================
 
-// Pobiera wszystkich użytkowników z bazy
 function getAllUsers() {
     const usersJSON = localStorage.getItem(usersDBKey);
     return usersJSON ? JSON.parse(usersJSON) : [];
 }
 
-// Zapisuje wszystkich użytkowników do bazy
 function saveAllUsers(usersArray) {
     localStorage.setItem(usersDBKey, JSON.stringify(usersArray));
 }
 
-// Walidacja hasła (Twoje wymagania)
 function validatePassword(pass) {
-    // Min 8 znaków, min 1 duża litera (A-Z), min 1 cyfra (0-9)
     const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     return regex.test(pass);
 }
 
-// REJESTRACJA
-document.getElementById('registerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const user = document.getElementById('regUser').value.trim();
-    const pass = document.getElementById('regPass').value;
-
-    if (!validatePassword(pass)) {
-        alert("Hasło musi mieć min. 8 znaków, 1 wielką literę i 1 cyfrę!");
-        return;
-    }
-
-    const users = getAllUsers();
-    if (users.find(u => u.username === user)) {
-        alert("Taki użytkownik już istnieje!");
-        return;
-    }
-
-    // Tworzenie struktury JSON użytkownika
-    const newUser = {
-        username: user,
-        password: pass, // W prawdziwej aplikacji hasła się hashuje!
-        measurements: [] // Pusta tablica na start
-    };
-
-    users.push(newUser);
-    saveAllUsers(users);
-    
-    alert("Konto utworzone! Możesz się zalogować.");
-    switchAuthView('login');
-    document.getElementById('registerForm').reset();
-});
-
-// LOGOWANIE
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const userInput = document.getElementById('loginUser').value.trim();
-    const passInput = document.getElementById('loginPass').value;
-
-    const users = getAllUsers();
-    const foundUser = users.find(u => u.username === userInput && u.password === passInput);
-
-    if (foundUser) {
-        loginUser(foundUser);
-    } else {
-        alert("Błędny login lub hasło.");
-    }
-});
-
+// Funkcja logowania - to tutaj dzieje się "magia" po kliknięciu Wejdź
 function loginUser(userObj) {
+    console.log("Logowanie udane:", userObj.username); // Diagnostyka w konsoli
     currentUser = userObj;
-    glucoseData = userObj.measurements || []; // Ładujemy dane JSON tego użytkownika
+    glucoseData = userObj.measurements || [];
     
-    // UI Update
-    document.getElementById('authModal').style.display = 'none';
-    document.getElementById('authBtn').innerHTML = '👤'; // Ikona profilu
-    document.getElementById('welcomeMsg').style.display = 'block';
-    document.getElementById('userNameDisplay').textContent = currentUser.username;
+    // 1. Zmień wygląd nagłówka (feedback dla użytkownika)
+    const authBtn = document.getElementById('authBtn');
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+
+    if (authBtn) {
+        authBtn.innerHTML = '👤'; 
+        authBtn.style.color = '#27ae60'; // ZMIANA KOLORU NA ZIELONY (Jesteś zalogowana)
+        authBtn.title = "Twój Profil (Kliknij aby wylogować)";
+    }
     
-    // Wypełnienie pola JSON w profilu
-    updateJsonDisplay();
+    if (welcomeMsg && userNameDisplay) {
+        welcomeMsg.style.display = 'block';
+        userNameDisplay.textContent = currentUser.username;
+    }
+
+    // 2. Zamknij okno modalne
+    closeAuthModal();
+
+    // 3. Załaduj dane do profilu (JSON)
+    if(document.getElementById('jsonDataBox')) {
+        document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
+    }
     
-    refreshViews(); // Odśwież tabelę i wykresy danymi użytkownika
+    // 4. Odśwież tabelę i wykresy
+    refreshViews(); 
 }
 
 function logout() {
     currentUser = null;
     glucoseData = [];
+    
+    // Reset wyglądu nagłówka
+    const authBtn = document.getElementById('authBtn');
+    if (authBtn) {
+        authBtn.style.color = '#333'; // Powrót do czarnego koloru
+        authBtn.title = "Zaloguj się";
+    }
     document.getElementById('welcomeMsg').style.display = 'none';
     document.getElementById('loginForm').reset();
-    refreshViews(); // Wyczyści widok
-    alert("Wylogowano.");
-    openAuthModal(); // Pokaż ekran logowania
+    
+    alert("Zostałeś wylogowany.");
+    
+    // Wyczyść widok i pokaż logowanie
+    refreshViews(); 
+    openAuthModal();
     switchAuthView('login');
 }
 
-// Zapisywanie danych bieżącego użytkownika do "bazy"
 function saveUserData() {
     if (!currentUser) return;
-    
-    currentUser.measurements = glucoseData; // Aktualizujemy lokalną tablicę
-    
-    // Pobieramy całą bazę, podmieniamy usera i zapisujemy
+    currentUser.measurements = glucoseData;
     const users = getAllUsers();
     const index = users.findIndex(u => u.username === currentUser.username);
     if (index !== -1) {
         users[index] = currentUser;
         saveAllUsers(users);
     }
-    updateJsonDisplay();
-}
-
-function updateJsonDisplay() {
-    if(currentUser) {
-        // Pretty print JSON (wcięcie 2 spacje)
+    // Aktualizuj podgląd JSON w profilu
+    if(document.getElementById('jsonDataBox')) {
         document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
     }
 }
 
 // ==========================================
-// 3. OBSŁUGA MODALA (Widok)
+// 4. OBSŁUGA OKNA MODALNEGO (Logowanie/Profil)
 // ==========================================
 
+// Tę funkcję przypisaliśmy do przycisku w HTML: onclick="openAuthModal()"
 function openAuthModal() {
     const modal = document.getElementById('authModal');
+    if (!modal) return;
+
     modal.style.display = 'flex';
     
+    // Kluczowy moment: Co pokazać w oknie?
     if (currentUser) {
-        switchAuthView('profile'); // Jeśli zalogowany, pokaż profil
+        // Jeśli jestem zalogowany -> pokaż PROFIL (z przyciskiem wyloguj)
+        switchAuthView('profile'); 
     } else {
-        switchAuthView('login'); // Jeśli nie, pokaż logowanie
+        // Jeśli NIE jestem zalogowany -> pokaż formularz LOGOWANIA
+        switchAuthView('login'); 
     }
 }
 
 function closeAuthModal() {
-    document.getElementById('authModal').style.display = 'none';
+    const modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function switchAuthView(viewName) {
-    document.getElementById('loginView').style.display = 'none';
-    document.getElementById('registerView').style.display = 'none';
-    document.getElementById('profileView').style.display = 'none';
+    const loginView = document.getElementById('loginView');
+    const registerView = document.getElementById('registerView');
+    const profileView = document.getElementById('profileView');
 
-    if (viewName === 'login') document.getElementById('loginView').style.display = 'block';
-    if (viewName === 'register') document.getElementById('registerView').style.display = 'block';
-    if (viewName === 'profile') document.getElementById('profileView').style.display = 'block';
+    if (loginView) loginView.style.display = 'none';
+    if (registerView) registerView.style.display = 'none';
+    if (profileView) profileView.style.display = 'none';
+
+    if (viewName === 'login' && loginView) loginView.style.display = 'block';
+    if (viewName === 'register' && registerView) registerView.style.display = 'block';
+    if (viewName === 'profile' && profileView) profileView.style.display = 'block';
 }
 
-// Kliknięcie poza oknem zamyka modal
+// Kliknięcie poza oknem zamyka modal (chyba że nie jesteś zalogowany - wtedy wymusza logowanie)
 window.onclick = function(event) {
     const modal = document.getElementById('authModal');
     if (event.target == modal) {
-        // Jeśli użytkownik nie jest zalogowany, nie zamykaj (wymuś logowanie)
         if(currentUser) modal.style.display = "none";
     }
 }
 
 // ==========================================
-// 4. OBSŁUGA FORMULARZA POMIARÓW (Zmodyfikowana)
+// 5. OBSŁUGA POMIARÓW (Dodawanie/Tabela)
 // ==========================================
 
-if (glucoseForm) {
-    glucoseForm.addEventListener('submit', function(e) {
-        e.preventDefault(); 
-        
-        if (!currentUser) {
-            alert("Musisz się zalogować, aby zapisać wynik!");
-            openAuthModal();
-            return;
-        }
-
-        const resultInput = document.getElementById('result');
-        const timeInput = document.getElementById('time');
-        const categoryInput = document.getElementById('category');
-        const insulinInput = document.getElementById('insulin');
-        const carbsInput = document.getElementById('carbs');
-
-        if (!resultInput || !timeInput) return;
-
-        const result = parseInt(resultInput.value);
-        const time = timeInput.value;
-        const category = categoryInput.value;
-        const insulin = insulinInput.value !== "" ? insulinInput.value : "-";
-        const carbs = carbsInput.value !== "" ? carbsInput.value : "-";
-
-        const newRecord = { 
-            id: Date.now(),
-            result: result, 
-            time: time, 
-            category: category, 
-            insulin: insulin, 
-            carbs: carbs 
-        };
-
-        glucoseData.push(newRecord);
-        saveUserData(); // Zapisujemy do struktury JSON użytkownika
-        
-        refreshViews(); 
-        glucoseForm.reset();
-        setTimeDefaults(); 
-    });
-}
-
-// ==========================================
-// 5. RESZTA LOGIKI (Filtry, Tabela, Wykresy) - BEZ ZMIAN
-// ==========================================
-
-function setTimeDefaults() {
-    const timeInput = document.getElementById('time');
-    if (timeInput) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        timeInput.value = now.toISOString().slice(0, 16);
+function handleAddMeasurement(e) {
+    e.preventDefault(); 
+    
+    if (!currentUser) {
+        alert("Musisz się zalogować, aby zapisać wynik!");
+        openAuthModal();
+        return;
     }
+
+    const resultInput = document.getElementById('result');
+    const timeInput = document.getElementById('time');
+    const categoryInput = document.getElementById('category');
+    const insulinInput = document.getElementById('insulin');
+    const carbsInput = document.getElementById('carbs');
+
+    if (!resultInput || !timeInput) return;
+
+    const newRecord = { 
+        id: Date.now(),
+        result: parseInt(resultInput.value), 
+        time: timeInput.value, 
+        category: categoryInput.value, 
+        insulin: insulinInput.value !== "" ? insulinInput.value : "-", 
+        carbs: carbsInput.value !== "" ? carbsInput.value : "-" 
+    };
+
+    glucoseData.push(newRecord);
+    saveUserData(); // Zapis do usera
+    
+    refreshViews(); 
+    document.getElementById('glucoseForm').reset();
+    setTimeDefaults(); 
 }
 
 function getFilteredData() {
@@ -256,17 +282,19 @@ function refreshViews() {
 }
 
 function updateTable(data) {
-    if (!dataTableBody) return;
-    dataTableBody.innerHTML = ''; 
+    const tableBody = document.querySelector('#dataTable tbody');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = ''; 
     const sortedForDisplay = [...data].reverse(); 
 
     if (sortedForDisplay.length === 0) {
-        dataTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak pomiarów (lub nie jesteś zalogowany).</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak danych.</td></tr>';
         return;
     }
 
     sortedForDisplay.forEach(record => {
-        const row = dataTableBody.insertRow();
+        const row = tableBody.insertRow();
         let colorClass = 'normal';
         if (record.result < TARGET_RANGE_MIN) colorClass = 'hypo'; 
         else if (record.result > TARGET_RANGE_MAX) colorClass = 'hyper'; 
@@ -310,7 +338,6 @@ function updateMetrics(data) {
 
     const total = data.reduce((sum, r) => sum + parseInt(r.result), 0);
     const average = (total / data.length).toFixed(0);
-    
     const inRangeCount = data.filter(r => r.result >= TARGET_RANGE_MIN && r.result <= TARGET_RANGE_MAX).length;
     const tirPercentage = ((inRangeCount / data.length) * 100).toFixed(0);
 
@@ -319,9 +346,11 @@ function updateMetrics(data) {
     countEl.textContent = data.length;
 }
 
-// START
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeDefaults();
-    // Wymuszamy pokazanie okna logowania na start
-    openAuthModal();
-});
+function setTimeDefaults() {
+    const timeInput = document.getElementById('time');
+    if (timeInput) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        timeInput.value = now.toISOString().slice(0, 16);
+    }
+}
