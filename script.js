@@ -1,36 +1,44 @@
-function register() {
-    const user = regUser.value;
-    const pass = regPass.value;
+// REJESTRACJA
+document.getElementById("regBtn").addEventListener("click", function () {
+    const user = document.getElementById("regUser").value;
+    const pass = document.getElementById("regPass").value;
+    const msg = document.getElementById("msg");
 
-    // WALIDACJA HASŁA
-    const regex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
-
-    if (!regex.test(pass)) {
-        msg.innerText = "Hasło: min. 6 znaków, 1 duża litera, 1 cyfra";
+    if (!user || !pass) {
+        msg.innerText = "Uzupełnij wszystkie pola";
         return;
     }
 
-    // zapis do localStorage
+    const regex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
+
+    if (!regex.test(pass)) {
+        msg.innerText = "Hasło: min. 6 znaków, 1 duża litera i 1 cyfra";
+        return;
+    }
+
     localStorage.setItem("user", user);
     localStorage.setItem("pass", pass);
 
-    msg.innerText = "Zarejestrowano!";
-}
+    msg.innerText = "Rejestracja OK";
+});
 
-function login() {
-    const user = logUser.value;
-    const pass = logPass.value;
+// LOGOWANIE
+document.getElementById("logBtn").addEventListener("click", function () {
+    const user = document.getElementById("logUser").value;
+    const pass = document.getElementById("logPass").value;
+    const msg = document.getElementById("msg");
 
-    const savedUser = localStorage.getItem("user");
-    const savedPass = localStorage.getItem("pass");
-
-    if (user === savedUser && pass === savedPass) {
+    if (
+        user === localStorage.getItem("user") &&
+        pass === localStorage.getItem("pass")
+    ) {
         localStorage.setItem("logged", "true");
         window.location.href = "profile.html";
     } else {
-        msg.innerText = "Błędne dane";
+        msg.innerText = "Błędne dane logowania";
     }
-}
+});
+
 
 // ==========================================
 // 1. ZMIENNE GLOBALNE I KONFIGURACJA
@@ -253,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeDefaults();
     refreshViews();
 });
+
 
 
 
