@@ -1,3 +1,27 @@
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const login = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    // WALIDACJA HASŁA
+    const hasloRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!hasloRegex.test(password)) {
+        document.getElementById("error").innerText =
+            "Hasło musi mieć min. 8 znaków, 1 cyfrę i 1 wielką literę";
+        return;
+    }
+
+    // FAKE logowanie (tylko demo)
+    if (login === "admin" && password === "Admin123") {
+        localStorage.setItem("user", login);
+        window.location.href = "profil.html";
+    } else {
+        document.getElementById("error").innerText = "Błędne dane logowania";
+    }
+});
+
 // ==========================================
 // 1. ZMIENNE GLOBALNE I KONFIGURACJA
 // ==========================================
@@ -219,3 +243,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeDefaults();
     refreshViews();
 });
+
+
