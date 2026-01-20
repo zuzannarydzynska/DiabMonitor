@@ -9,7 +9,7 @@ body {
     padding: 15px; 
 }
 
-/* --- Mechanizm ukrywania ekranów --- */
+/* --- MECHANIZM UKRYWANIA EKRANÓW (KLUCZOWE) --- */
 .hidden { display: none !important; }
 
 /* --- Główny kontener --- */
@@ -53,8 +53,8 @@ input, select {
     background-color: #fafafa;
 }
 
-/* Stylizacja grup w select (Typy cukrzycy) */
-optgroup { font-style: normal; font-weight: bold; color: #2c3e50; }
+/* Styl dla grup w liście rozwijanej */
+optgroup { font-weight: bold; color: #2c3e50; font-style: normal; }
 
 .save-btn { 
     width: 100%; 
@@ -113,6 +113,7 @@ table { width: 100%; border-collapse: collapse; }
 th { background: #ecf0f1; padding: 10px; text-align: left; color: #555; font-size: 0.9rem; }
 td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vertical-align: middle; }
 
+/* Kolory wyników */
 .hypo { color: #e74c3c; font-weight: bold; } 
 .normal { color: #27ae60; font-weight: bold; } 
 .hyper { color: #d35400; font-weight: bold; }
