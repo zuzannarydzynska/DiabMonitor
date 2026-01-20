@@ -4,9 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiabMonitor | Interaktywny System Glikemii</title>
-    <link rel="stylesheet" href="styles.css">
-    </head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Podstawowe style, aby widok był czytelny bez zewnętrznego pliku CSS */
+        body { font-family: sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        header { text-align: center; margin-bottom: 30px; }
+        
+        /* Style formularza */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+
+        /* Style tabeli - Zastępują style wykresu */
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto; /* Przewijanie na telefonach */
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #333; }
+        tr:hover { background-color: #f1f1f1; }
+
+        /* Wskaźniki */
+        #summary-metrics { display: flex; justify-content: space-around; background: #e9ecef; padding: 10px; border-radius: 5px; }
+        .filter-controls button { width: auto; margin-right: 5px; background-color: #6c757d; }
+    </style>
+</head>
 <body>
 
     <header>
@@ -57,12 +83,15 @@
         </section>
 
         <section id="dashboard" class="card">
-            <h2>📈 Dashboard i Analiza</h2>
+            <h2>📈 Analiza i Historia</h2>
             
             <div id="summary-metrics">
-                <h3>Kluczowe Wskaźniki</h3>
-                <p>Średnia Glikemia (7 dni): <span id="avg-glucose">--</span></p>
-                <p>Czas w Zakresie (TIR): <span id="time-in-range">--</span></p>
+                <div>
+                    <strong>Średnia (7 dni):</strong> <span id="avg-glucose">--</span>
+                </div>
+                <div>
+                    <strong>TIR:</strong> <span id="time-in-range">--</span>
+                </div>
             </div>
 
             <hr>
@@ -73,29 +102,30 @@
                 <button data-period="30d">30 Dni</button>
             </div>
 
-            <div class="chart-container">
-                <h3>Wykres Dzienny/Tygodniowy</h3>
-                <canvas id="glucoseChart"></canvas>
-                
+            <div class="table-container">
+                <h3>Ostatnie Pomiary</h3>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Data i Czas</th>
+                            <th>Wynik</th>
+                            <th>Kategoria</th>
+                            <th>Insulina</th>
+                            <th>WW</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2023-10-25 08:00</td>
+                            <td>115 mg/dL</td>
+                            <td>Na czczo</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-        </section>
-
-        <section id="log-table" class="card">
-            <h2>📜 Pełny Dziennik Pomiarów</h2>
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>Data i Czas</th>
-                        <th>Wynik</th>
-                        <th>Kategoria</th>
-                        <th>Insulina</th>
-                        <th>WW</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
         </section>
 
     </main>
