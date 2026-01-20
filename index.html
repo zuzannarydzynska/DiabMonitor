@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiabMonitor | Wertykalny</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>DiabMonitor | Wersja Mobilna</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <h1>🩸 DiabMonitor</h1>
-        <p>Rejestr Glikemii</p>
+        <p>Twoja Historia Glikemii</p>
     </header>
 
     <main class="container">
         
         <section class="card">
-            <h2>➕ Dodaj Nowy Pomiar</h2>
+            <h2>➕ Dodaj Pomiar</h2>
             <form id="glucoseForm">
                 <div class="form-group">
                     <label for="result">Wynik (mg/dL)</label>
@@ -40,12 +40,12 @@
                 
                 <div class="form-group">
                     <label for="insulin">Insulina (j)</label>
-                    <input type="number" id="insulin" placeholder="0">
+                    <input type="number" id="insulin" placeholder="Opcjonalne">
                 </div>
                 
                 <div class="form-group">
-                    <label for="carbs">WW</label>
-                    <input type="number" id="carbs" step="0.5" placeholder="0">
+                    <label for="carbs">Węglowodany (WW)</label>
+                    <input type="number" id="carbs" step="0.5" placeholder="Opcjonalne">
                 </div>
                 
                 <button type="submit" class="save-btn">Zapisz Wynik</button>
@@ -53,21 +53,48 @@
         </section>
 
         <section class="card">
-            <h2>📊 Panel Analizy</h2>
+            <h2>📊 Statystyki</h2>
             
             <div id="summary-metrics">
                 <div class="metric-box">
-                    <div class="metric-label">Średnia</div>
-                    <div class="metric-val" id="avg-glucose">--</div>
+                    <span class="metric-label">Średnia glikemia</span>
+                    <span class="metric-val" id="avg-glucose">--</span>
                 </div>
                 <div class="metric-box">
-                    <div class="metric-label">TIR (Norma)</div>
-                    <div class="metric-val" id="time-in-range">--</div>
+                    <span class="metric-label">W normie (TIR)</span>
+                    <span class="metric-val" id="time-in-range">--</span>
                 </div>
                 <div class="metric-box">
-                    <div class="metric-label">Liczba Pomiarów</div>
-                    <div class="metric-val" id="count-glucose">--</div>
+                    <span class="metric-label">Liczba pomiarów</span>
+                    <span class="metric-val" id="count-glucose">--</span>
                 </div>
             </div>
 
             <div class="filter-controls">
+                <button class="filter-btn active" onclick="setFilter('24h', this)">Ostatnie 24h</button>
+                <button class="filter-btn" onclick="setFilter('7d', this)">Ostatnie 7 Dni</button>
+                <button class="filter-btn" onclick="setFilter('30d', this)">Ostatnie 30 Dni</button>
+                <button class="filter-btn" onclick="setFilter('all', this)">Wszystkie Pomiary</button>
+            </div>
+
+            <h3 class="log-title">Dziennik</h3>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Wynik</th>
+                            <th>Szczegóły</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
