@@ -143,3 +143,4 @@ window.setFilter = function(filter, btn) {
 };
 
 document.addEventListener('DOMContentLoaded', checkSession);
+
