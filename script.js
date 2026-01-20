@@ -1,16 +1,17 @@
 let glucoseData = []; 
 const glucoseForm = document.getElementById('glucoseForm');
 const dataTableBody = document.querySelector('#dataTable tbody');
-let myChart; // Zmienna do przechowywania instancji wykresu
+let myChart; 
 
-// Ustawienia zakresów (mg/dL)
+// Zmienna przechowująca aktualny filtr (domyślnie 24h)
+let currentFilter = '24h'; 
+
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 
 // =======================================================================
-// 2. FUNKCJE OBSŁUGI DANYCH (localStorage)
+// 1. OBSŁUGA LOCALSTORAGE
 // =======================================================================
-
 function saveDataToLocalStorage() {
     localStorage.setItem('glucoseRecords', JSON.stringify(glucoseData));
 }
@@ -19,15 +20,13 @@ function loadDataFromLocalStorage() {
     const storedData = localStorage.getItem('glucoseRecords');
     if (storedData) {
         glucoseData = JSON.parse(storedData);
-        // Sortowanie danych od najstarszych do najnowszych (lepsze dla wykresów)
         glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
     }
 }
 
 // =======================================================================
-// 3. OBSŁUGA FORMULARZA
+// 2. OBSŁUGA FORMULARZA
 // =======================================================================
-
 glucoseForm.addEventListener('submit', function(e) {
     e.preventDefault(); 
 
@@ -37,128 +36,142 @@ glucoseForm.addEventListener('submit', function(e) {
     const insulin = document.getElementById('insulin').value ? parseInt(document.getElementById('insulin').value) : 0;
     const carbs = document.getElementById('carbs').value ? parseFloat(document.getElementById('carbs').value) : 0;
 
-    const newRecord = {
-        result: result,
-        time: time,
-        category: category,
-        insulin: insulin,
-        carbs: carbs
-    };
+    const newRecord = { result, time, category, insulin, carbs };
 
-    // Dodajemy nowy rekord, a następnie sortujemy całą tablicę
     glucoseData.push(newRecord);
     glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
     
     saveDataToLocalStorage(); 
+    refreshViews(); // Odśwież wszystko
     
-    // Aktualizacja widoku
-    updateTable();
-    updateMetrics();
-    drawChart();
-
-    // Czyszczenie formularza
     glucoseForm.reset();
     setTimeDefaults(); 
 });
 
-
-// =======================================================================
-// 4. AKTUALIZACJA WIDOKU
-// =======================================================================
-
 function setTimeDefaults() {
     const now = new Date();
-    // Ustawia domyślny czas na ten moment
-    const formattedDate = now.toISOString().slice(0, 16); 
-    document.getElementById('time').value = formattedDate;
+    // Przesunięcie czasu dla strefy PL, aby input datetime-local działał poprawnie
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('time').value = now.toISOString().slice(0, 16);
 }
 
-function updateTable() {
-    dataTableBody.innerHTML = ''; 
+// =======================================================================
+// 3. FILTROWANIE DANYCH
+// =======================================================================
+function getFilteredData() {
+    if (currentFilter === 'all') return glucoseData;
 
-    // Odwracamy kolejność, aby najnowsze były na górze tabeli (wizualnie)
-    const sortedForTable = [...glucoseData].reverse(); 
+    const now = new Date();
+    let hoursToSubtract = 24;
+
+    if (currentFilter === '7d') hoursToSubtract = 168; // 7 * 24
+    if (currentFilter === '30d') hoursToSubtract = 720; // 30 * 24
+
+    const cutoffTime = now.getTime() - (hoursToSubtract * 60 * 60 * 1000);
+    
+    return glucoseData.filter(record => new Date(record.time).getTime() > cutoffTime);
+}
+
+// Funkcja wywoływana po kliknięciu przycisku filtra
+window.setFilter = function(filterType, btnElement) {
+    currentFilter = filterType;
+    
+    // Obsługa klas CSS przycisków
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    if(btnElement) btnElement.classList.add('active');
+
+    refreshViews();
+}
+
+function refreshViews() {
+    const dataToShow = getFilteredData();
+    updateTable(dataToShow);
+    updateMetrics(dataToShow);
+    drawChart(dataToShow);
+}
+
+// =======================================================================
+// 4. AKTUALIZACJA TABELI
+// =======================================================================
+function updateTable(data) {
+    dataTableBody.innerHTML = ''; 
+    
+    // Kopia i odwrócenie do tabeli (najnowsze na górze)
+    const sortedForTable = [...data].reverse(); 
+
+    if (sortedForTable.length === 0) {
+        dataTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center">Brak danych w tym okresie</td></tr>';
+        return;
+    }
 
     sortedForTable.forEach(record => {
         const row = dataTableBody.insertRow();
         
-        // Klasyfikacja kolorystyczna
         let colorClass = 'normal';
-        if (record.result < TARGET_RANGE_MIN) {
-            colorClass = 'hypo'; 
-        } else if (record.result > TARGET_RANGE_MAX) {
-            colorClass = 'hyper'; 
-        }
+        if (record.result < TARGET_RANGE_MIN) colorClass = 'hypo'; 
+        else if (record.result > TARGET_RANGE_MAX) colorClass = 'hyper'; 
 
         const date = new Date(record.time);
-        row.insertCell().textContent = date.toLocaleString('pl-PL');
+        row.insertCell().textContent = date.toLocaleString('pl-PL', { month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit'});
 
         const resultCell = row.insertCell();
         resultCell.textContent = record.result;
         resultCell.classList.add(colorClass);
 
         row.insertCell().textContent = record.category;
-        row.insertCell().textContent = record.insulin;
-        row.insertCell().textContent = record.carbs;
+        row.insertCell().textContent = record.insulin || '-';
+        row.insertCell().textContent = record.carbs || '-';
     });
 }
 
-function updateMetrics() {
-    if (glucoseData.length === 0) {
+// =======================================================================
+// 5. AKTUALIZACJA STATYSTYK
+// =======================================================================
+function updateMetrics(data) {
+    if (data.length === 0) {
         document.getElementById('avg-glucose').textContent = '--';
         document.getElementById('time-in-range').textContent = '--';
         return;
     }
 
-    // Obliczenia
-    const total = glucoseData.reduce((sum, record) => sum + record.result, 0);
-    const average = (total / glucoseData.length).toFixed(1);
+    const total = data.reduce((sum, record) => sum + record.result, 0);
+    const average = (total / data.length).toFixed(0);
 
-    // Czas w Zakresie (Time In Range, TIR)
-    const inRangeCount = glucoseData.filter(record => 
+    const inRangeCount = data.filter(record => 
         record.result >= TARGET_RANGE_MIN && record.result <= TARGET_RANGE_MAX
     ).length;
-    const tirPercentage = ((inRangeCount / glucoseData.length) * 100).toFixed(1);
+    const tirPercentage = ((inRangeCount / data.length) * 100).toFixed(0);
 
-    // Wyświetlanie
     document.getElementById('avg-glucose').textContent = `${average} mg/dL`;
     document.getElementById('time-in-range').textContent = `${tirPercentage}%`;
 }
 
-
 // =======================================================================
-// 5. WIZUALIZACJA (Chart.js)
+// 6. WYKRES (Chart.js)
 // =======================================================================
+function drawChart(data) {
+    const ctx = document.getElementById('glucoseChart').getContext('2d');
 
-function drawChart() {
-    // 1. Zniszcz stary wykres, jeśli istnieje
+    // Przygotowanie danych
+    const labels = data.map(record => new Date(record.time).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' }));
+    const dataPoints = data.map(record => record.result);
+
     if (myChart) {
         myChart.destroy();
     }
 
-    // 2. Przygotowanie danych do wykresu (wykres z ostatnich 24h dla przykładu)
-    const now = new Date();
-    const oneDayAgo = now.getTime() - (24 * 60 * 60 * 1000);
-
-    const filteredData = glucoseData.filter(record => new Date(record.time).getTime() > oneDayAgo);
-    
-    const labels = filteredData.map(record => new Date(record.time).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }));
-    const dataPoints = filteredData.map(record => record.result);
-
-    const ctx = document.getElementById('glucoseChart').getContext('2d');
-
-    // 3. Konfiguracja wykresu Chart.js
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Poziom Glikemii',
+                label: 'Glikemia',
                 data: dataPoints,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                fill: false,
-                tension: 0.1
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3
             }]
         },
         options: {
@@ -166,62 +179,35 @@ function drawChart() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Glikemia (mg/dL)'
-                    },
-                    // Dodanie linii referencyjnych dla zakresu docelowego (TARGET_RANGE)
-                    min: 50, // stała minimalna wartość na osi Y
-                    max: 300, // stała maksymalna wartość na osi Y
-                    ticks: {
-                        stepSize: 50
-                    },
-                    border: {
-                        display: false
-                    },
-                    // Strefy kolorystyczne
-                    // Wykorzystuje się Chart.js Plugin 'Annotation' dla lepszych stref, ale zrobimy to prosto:
-                    // Zaznaczenie strefy docelowej (zielonej)
-                    
-                    // Linie referencyjne
-                    // Source: https://www.chartjs.org/docs/latest/axes/styling.html#grid-line-styling
+                    min: 40,
+                    suggestedMax: 300,
                     grid: {
-                        drawOnChartArea: true,
-                        // Linia dla górnej granicy normy
-                        color: (context) => {
-                            if (context.tick.value === TARGET_RANGE_MAX) return 'red';
-                            if (context.tick.value === TARGET_RANGE_MIN) return 'red';
-                            return '#e9ecef';
+                        color: (ctx) => {
+                            if (ctx.tick.value === 70 || ctx.tick.value === 180) return 'rgba(46, 204, 113, 0.5)';
+                            return '#f0f0f0';
                         },
-                        lineWidth: (context) => {
-                             if (context.tick.value === TARGET_RANGE_MAX || context.tick.value === TARGET_RANGE_MIN) return 2;
+                        lineWidth: (ctx) => {
+                            if (ctx.tick.value === 70 || ctx.tick.value === 180) return 2;
                             return 1;
                         }
                     }
                 }
             },
             plugins: {
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
-                },
-                legend: {
-                    display: false
-                }
+                legend: { display: false }
             }
         }
     });
 }
 
 // =======================================================================
-// 6. INICJALIZACJA APLIKACJI
+// 7. START
 // =======================================================================
-
 document.addEventListener('DOMContentLoaded', function() {
     loadDataFromLocalStorage();
-    setTimeDefaults(); 
-    updateMetrics(); // Zaktualizuj metryki przed tabelą
-    updateTable(); 
-    drawChart(); // Narysuj wykres przy starcie
+    setTimeDefaults();
+    
+    // Jeśli baza jest pusta, nic nie dodajemy, czekamy na dane użytkownika
+    
+    refreshViews(); // Uruchomienie z domyślnym filtrem 24h
 });
