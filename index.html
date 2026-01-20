@@ -23,16 +23,25 @@
     <p id="msg"></p>
 </div>
 
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil</title>
+</head>
+<body>
+
 <h2>Profil użytkownika</h2>
 <p id="info"></p>
-<button onclick="logout()">Wyloguj</button>
+<button type="button" onclick="logout()">Wyloguj</button>
 
 <script>
     if (localStorage.getItem("logged") !== "true") {
         window.location.href = "index.html";
     }
 
-    info.innerText = "Zalogowany: " + localStorage.getItem("user");
+    document.getElementById("info").innerText =
+        "Zalogowany: " + localStorage.getItem("user");
 
     function logout() {
         localStorage.clear();
@@ -40,8 +49,9 @@
     }
 </script>
 
-    
-</div>
+</body>
+</html>
+
 
     <header>
         <h1>🩸 DiabMonitor</h1>
@@ -133,6 +143,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
