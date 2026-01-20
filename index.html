@@ -4,20 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiabMonitor | Wersja Mobilna</title>
-     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
-
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-   <header>
+    <header>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1>🩸 DiabMonitor</h1>
-                <p>Twoja Historia Glikemii</p>
+                <h1 style="margin: 0; font-size: 1.5rem;">🩸 DiabMonitor</h1>
+                <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #666;">Twoja Historia Glikemii</p>
             </div>
-            <button id="authBtn" onclick="openAuthModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">👤</button>
+            <button id="authBtn" onclick="openAuthModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer; padding: 0 10px;">👤</button>
         </div>
-        <p id="welcomeMsg" style="font-size: 0.9rem; color: #3498db; display: none;">Witaj, <span id="userNameDisplay"></span></p>
+        <p id="welcomeMsg" style="font-size: 0.9rem; color: #27ae60; display: none; text-align: right; margin-top: 5px;">Witaj, <span id="userNameDisplay" style="font-weight: bold;"></span></p>
     </header>
 
     <main class="container">
@@ -101,70 +99,12 @@
         </section>
 
     </main>
-<div id="authModal" class="modal">
+
+    <div id="authModal" class="modal">
         <div class="modal-content card">
             <span class="close-modal" onclick="closeAuthModal()">&times;</span>
             
             <div id="loginView">
                 <h2>🔐 Zaloguj się</h2>
                 <form id="loginForm">
-                    <div class="form-group">
-                        <label>Login</label>
-                        <input type="text" id="loginUser" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Hasło</label>
-                        <input type="password" id="loginPass" required>
-                    </div>
-                    <button type="submit" class="save-btn">Wejdź</button>
-                    <p style="margin-top:15px; text-align:center;">
-                        Nie masz konta? <a href="#" onclick="switchAuthView('register')">Zarejestruj się</a>
-                    </p>
-                </form>
-            </div>
-
-            <div id="registerView" style="display: none;">
-                <h2>📝 Utwórz Profil</h2>
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>Nowy Login</label>
-                        <input type="text" id="regUser" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Hasło</label>
-                        <input type="password" id="regPass" required>
-                        <small style="color: #666; font-size: 0.8em; display:block; margin-top:5px;">
-                            Wymagane: min. 8 znaków, 1 wielka litera, 1 cyfra.
-                        </small>
-                    </div>
-                    <button type="submit" class="save-btn" style="background-color: #27ae60;">Stwórz Konto</button>
-                    <p style="margin-top:15px; text-align:center;">
-                        Masz konto? <a href="#" onclick="switchAuthView('login')">Zaloguj się</a>
-                    </p>
-                </form>
-            </div>
-
-            <div id="profileView" style="display: none;">
-                <h2>👤 Twój Profil</h2>
-                <div class="form-group">
-                    <label>Twoje dane (JSON)</label>
-                    <textarea id="jsonDataBox" rows="6" readonly style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-family:monospace; font-size:0.8rem;"></textarea>
-                    <small>To są Twoje surowe dane, które są wysyłane/odbierane.</small>
-                </div>
-                <button onclick="logout()" class="save-btn" style="background-color: #e74c3c;">Wyloguj</button>
-            </div>
-        </div>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
+                    <div class="form-
