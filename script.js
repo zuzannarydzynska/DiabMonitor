@@ -54,7 +54,7 @@ function handleRegister(e) {
         alert("Taki użytkownik już istnieje!");
         return;
     }
-//twworzenie obiektuu
+//twworzenie obiektu uzytkownik
     const newUser = {
         username: user,
         password: pass,
@@ -110,14 +110,14 @@ function updateAuthUI(isLoggedIn) {
     const userNameDisplay = document.getElementById('userNameDisplay');
 
     if (isLoggedIn) {
-        authBtn.style.color = '#27ae60'; // Zielony
+        authBtn.style.color = '#27ae60'; // zielony
         authBtn.title = "Twój Profil";
         welcomeMsg.style.display = 'block';
         userNameDisplay.textContent = currentUser.username;
         // Wypełnij JSON
         document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
     } else {
-        authBtn.style.color = '#333'; // Czarny
+        authBtn.style.color = '#333'; // czarny
         authBtn.title = "Zaloguj się";
         welcomeMsg.style.display = 'none';
         userNameDisplay.textContent = '';
@@ -138,7 +138,7 @@ function saveUserData() {
     if(currentUser) document.getElementById('jsonDataBox').value = JSON.stringify(currentUser, null, 2);
 }
 
-// --- OBSŁUGA MODALA ---
+// OBSLUGA TEGO OKNA Z LOGOWANIEM
 function openAuthModal() {
     const modal = document.getElementById('authModal');
     modal.style.display = 'flex';
@@ -151,11 +151,9 @@ function openAuthModal() {
 }
 
 function closeAuthModal() {
-    // Pozwól zamknąć tylko jeśli jest zalogowany
+    // pozwól zamknąć tylko jeśli jest zalogowany
     if (currentUser) {
         document.getElementById('authModal').style.display = 'none';
-    } else {
-        // Opcjonalnie: alert("Musisz się zalogować!");
     }
 }
 
@@ -207,7 +205,8 @@ function handleAddMeasurement(e) {
 }
 
 function getFilteredData() {
-    // Sortowanie chronologiczne
+    
+    // sortowanie chronologiczne wynikow
     glucoseData.sort((a, b) => new Date(a.time) - new Date(b.time));
     if (currentFilter === 'all') return glucoseData;
 
@@ -237,14 +236,14 @@ function updateTable(data) {
     const tableBody = document.querySelector('#dataTable tbody');
     tableBody.innerHTML = ''; 
     
-    // Do wyświetlania odwracamy (najnowsze na górze)
+    // do wyświetlania odwrotnie (najnowsze na górze)
     const sortedForDisplay = [...data].reverse(); 
 
     if (sortedForDisplay.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#777;">Brak danych.</td></tr>';
         return;
     }
-
+//kolorki do poziomu glikemii
     sortedForDisplay.forEach(record => {
         const row = tableBody.insertRow();
         let colorClass = 'normal';
@@ -257,12 +256,12 @@ function updateTable(data) {
             <div style="font-weight:600; color:#333;">${d.toLocaleDateString('pl-PL')}</div>
             <div style="font-size:0.85em; color:#888;">${d.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'})}</div>
         `;
-
+// TABELA DZIENNIK
         const cellResult = row.insertCell();
         cellResult.textContent = record.result;
         cellResult.className = colorClass;
         cellResult.style.fontSize = '1.3em'; 
-
+    // do html
         row.insertCell().innerHTML = `
             <div style="font-size:0.9em; margin-bottom:2px;">${record.category}</div>
             <div style="font-size:0.8em; color:#666;">
@@ -302,4 +301,5 @@ function setTimeDefaults() {
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
+
 
