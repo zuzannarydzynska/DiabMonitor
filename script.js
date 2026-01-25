@@ -292,7 +292,7 @@ function updateMetrics(data) {
     tirEl.textContent = `${tirPercentage}%`;
     countEl.textContent = data.length;
 }
-
+//godzina aktualna
 function setTimeDefaults() {
     const timeInput = document.getElementById('time');
     if (timeInput) {
@@ -301,5 +301,6 @@ function setTimeDefaults() {
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
+
 
 
