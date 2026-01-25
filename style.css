@@ -1,8 +1,9 @@
-* { box-sizing: border-box; }
 
+* { box-sizing: border-box; }
+/* cale tlo jakby  */
 body { 
     font-family: 'Segoe UI', sans-serif; 
-    background-color: #f4f7f6; 
+    background-color: #f4f7f6; /* szary*/
     color: #333; 
     margin: 0; 
     padding: 15px; 
@@ -21,14 +22,14 @@ header {
     margin-bottom: 10px; 
 }
 
-/* --- Karty --- */
+/* kazdy formularz, stats, modal*/
 .card { 
     background: white; 
     padding: 20px; 
     border-radius: 12px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
 }
-
+/* stats i pomiar*/
 h2 { 
     margin-top: 0; 
     border-bottom: 2px solid #3498db; 
@@ -38,7 +39,7 @@ h2 {
     font-size: 1.2rem;
 }
 
-/* --- Formularz --- */
+/* formularze */
 .form-group { margin-bottom: 15px; width: 100%; }
 label { display: block; font-weight: 600; margin-bottom: 5px; color: #555; }
 input, select, textarea { 
@@ -49,7 +50,7 @@ input, select, textarea {
     font-size: 16px; 
     background-color: #fafafa;
 }
-
+/* przyciski */
 .save-btn { 
     width: 100%; 
     background: #3498db; 
@@ -63,9 +64,10 @@ input, select, textarea {
     margin-top: 10px;
     transition: background 0.2s;
 }
+/* inny kolor jak nacisniesz*/
 .save-btn:hover { background: #2980b9; }
 
-/* --- Statystyki --- */
+/* DZIENNIK */
 #summary-metrics { 
     display: flex; 
     flex-direction: column; 
@@ -87,7 +89,7 @@ input, select, textarea {
 .metric-label { color: #7f8c8d; font-size: 0.95rem; }
 .metric-val { font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
 
-/* --- Filtry --- */
+/* przyciski 24h */
 .filter-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 25px; }
 .filter-btn { 
     width: 100%; 
@@ -101,21 +103,21 @@ input, select, textarea {
 }
 .filter-btn.active { background: #3498db; color: white; }
 
-/* --- Tabela --- */
+/* TABELA */
 .log-title { margin-bottom: 10px; color: #555; font-size: 1.1rem; }
 .table-wrapper { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { background: #ecf0f1; padding: 10px; text-align: left; color: #555; font-size: 0.9rem; }
 td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vertical-align: middle; }
 
-/* Kolory wyników */
+/* kolory wyników */
 .hypo { color: #e74c3c; font-weight: bold; } 
 .normal { color: #27ae60; font-weight: bold; } 
 .hyper { color: #d35400; font-weight: bold; }
 
-/* --- MODAL (OKNO LOGOWANIA) --- */
+/* OKNO LOGOWANIA */
 .modal {
-    display: none; /* Domyślnie ukryty */
+    display: none; /* domyślnie ukryte */
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -133,10 +135,10 @@ td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vert
     max-width: 400px;
     position: relative;
     animation: slideDown 0.3s ease-out;
-    max-height: 90vh; /* Żeby się mieściło na małych ekranach */
+    max-height: 90vh;
     overflow-y: auto;
 }
-
+/* animacja */
 @keyframes slideDown {
     from { transform: translateY(-50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -154,4 +156,5 @@ td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vert
 }
 
 a { color: #3498db; text-decoration: none; font-weight: 600; cursor: pointer; }
+
 
