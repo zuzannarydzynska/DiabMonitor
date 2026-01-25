@@ -1,18 +1,15 @@
-// ================= SKRYPT (JS) =================
-
-// --- ZMIENNE GLOBALNE ---
+// globalne zmienne
 let currentUser = null; 
 let glucoseData = [];   
 const usersDBKey = 'diabMonitor_users_v2'; 
 const TARGET_RANGE_MIN = 70;
 const TARGET_RANGE_MAX = 180;
 let currentFilter = '24h';
-
-// --- START APLIKACJI ---
+//start 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Aplikacja startuje...");
 
-    // Podpięcie zdarzeń formularzy
+    //formulatze co html
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const glucoseForm = document.getElementById('glucoseForm');
@@ -21,14 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) registerForm.addEventListener('submit', handleRegister);
     if (glucoseForm) glucoseForm.addEventListener('submit', handleAddMeasurement);
 
-    // Ustawienia początkowe
+    // poczatek
     setTimeDefaults();
     
-    // Wymuszamy pokazanie okna na start
+    // musi sie ktos zalogowac
     openAuthModal();
 });
 
-// --- OBSŁUGA BAZY DANYCH ---
+// BAZA DANYCH ten json
 function getAllUsers() {
     const usersJSON = localStorage.getItem(usersDBKey);
     return usersJSON ? JSON.parse(usersJSON) : [];
@@ -38,26 +35,26 @@ function saveAllUsers(usersArray) {
     localStorage.setItem(usersDBKey, JSON.stringify(usersArray));
 }
 
-// --- LOGOWANIE I REJESTRACJA ---
+// LOGOWANIE I REJESTRACJA
 
 function handleRegister(e) {
     e.preventDefault();
     const user = document.getElementById('regUser').value.trim();
     const pass = document.getElementById('regPass').value;
 
-    // Walidacja hasła
+    // walidacja hasla
     const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!regex.test(pass)) {
         alert("Hasło musi mieć min. 8 znaków, 1 wielką literę i 1 cyfrę!");
         return;
     }
-
+   // sprawdzanie czy konto istnieje
     const users = getAllUsers();
     if (users.find(u => u.username === user)) {
         alert("Taki użytkownik już istnieje!");
         return;
     }
-
+//twworzenie obiektuu
     const newUser = {
         username: user,
         password: pass,
@@ -81,11 +78,11 @@ function handleLogin(e) {
     const foundUser = users.find(u => u.username === userInput && u.password === passInput);
 
     if (foundUser) {
-        // Logowanie udane
+        // logowanie udane
         currentUser = foundUser;
         glucoseData = foundUser.measurements || [];
         
-        // UI Update
+        // nie ma konta?
         updateAuthUI(true);
         refreshViews();
         closeAuthModal();
@@ -172,7 +169,7 @@ function switchAuthView(viewName) {
     if (viewName === 'profile') document.getElementById('profileView').style.display = 'block';
 }
 
-// --- LOGIKA POMIARÓW ---
+// pomiary 
 function handleAddMeasurement(e) {
     e.preventDefault(); 
     
@@ -185,7 +182,7 @@ function handleAddMeasurement(e) {
     const resultInput = document.getElementById('result');
     const timeInput = document.getElementById('time');
     
-    // Pobieranie wartości
+    // zbieranie danych
     const result = parseInt(resultInput.value);
     const time = timeInput.value;
     const category = document.getElementById('category').value;
@@ -305,3 +302,4 @@ function setTimeDefaults() {
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
+
