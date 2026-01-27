@@ -41,6 +41,10 @@ function handleRegister(e) {
     e.preventDefault();
     const user = document.getElementById('regUser').value.trim();
     const regex = /{4,}$/;
+    if (!regex.test(pass))  {
+alert("Login musi mieć min. 4 znaki!");
+        return;
+    }
      const pass = document.getElementById('regPass').value;
     
     // walidacja hasla
@@ -302,6 +306,7 @@ function setTimeDefaults() {
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
+
 
 
 
