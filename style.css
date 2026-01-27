@@ -53,7 +53,7 @@ input, select, textarea {
 /* przyciski */
 .save-btn { 
     width: 100%; 
-    background: #3498db; 
+    background: green; 
     color: white; 
     border: none; 
     padding: 15px; 
@@ -156,5 +156,6 @@ td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; vert
 }
 
 a { color: #3498db; text-decoration: none; font-weight: 600; cursor: pointer; }
+
 
 
