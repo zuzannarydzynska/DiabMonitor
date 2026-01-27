@@ -40,8 +40,9 @@ function saveAllUsers(usersArray) {
 function handleRegister(e) {
     e.preventDefault();
     const user = document.getElementById('regUser').value.trim();
-    const pass = document.getElementById('regPass').value;
-
+    const regex = /{4,}$/;
+     const pass = document.getElementById('regPass').value;
+    
     // walidacja hasla
     const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!regex.test(pass)) {
@@ -301,6 +302,7 @@ function setTimeDefaults() {
         timeInput.value = now.toISOString().slice(0, 16);
     }
 }
+
 
 
 
