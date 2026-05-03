@@ -1,4 +1,4 @@
-// globalne zmienne
+
 let currentUser = null; 
 let glucoseData = [];   
 const usersDBKey = 'diabMonitor_users_v2'; 
